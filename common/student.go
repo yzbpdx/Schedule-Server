@@ -1,12 +1,12 @@
 package common
 
 type StudentDict struct {
-	StudentId   int                `json:"studentId"`
-	StudentName string             `json:"name"`
-	Class       string             `json:"class"`
-	SpareTime   []SpareTime        `json:"spareTime"`
-	Lesson      []LessonForStudent `json:"lesson"`
-	Priority    float64            `json:"-"`
+	StudentId   int                      `json:"studentId" gorm:"column:studentId"`
+	StudentName string                   `json:"studentName" gorm:"column:studentName"`
+	Class       string                   `json:"class" gorm:"column:class"`
+	SpareTime   map[int]map[int]struct{} `json:"spareTime" gorm:"-"`
+	Lesson      []LessonForStudent       `json:"lesson" gorm:"-"`
+	Priority    float64                  `json:"-" gorm:"-"`
 }
 
 type LessonForStudent struct {

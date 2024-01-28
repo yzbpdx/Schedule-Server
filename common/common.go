@@ -1,8 +1,8 @@
 package common
 
 type SpareTime struct {
-	WeekDay  int        `json:"weekDay"`
-	Duration []Duration `json:"duration"`
+	WeekDay  int   `json:"weekDay"`
+	Duration []int `json:"duration"`
 }
 
 type Duration struct {
