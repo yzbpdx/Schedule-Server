@@ -1,7 +1,6 @@
 package algorithm
 
 import (
-	"schedule/common"
 	"sort"
 )
 
@@ -13,7 +12,7 @@ type StudyPair struct {
 	SpareTime   map[int]map[int]struct{}
 }
 
-func SortStudyPairs(studyPairs *[]StudyPair, students map[string]common.StudentDict, teachers map[string]common.TeacherDict) {
+func SortStudyPairs(studyPairs *[]StudyPair, students map[string]Student, teachers map[string]Teacher) {
 	for sName, sDict := range students {
 		for _, lesson := range sDict.Lesson {
 			teacher := lesson.Teacher

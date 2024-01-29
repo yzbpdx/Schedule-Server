@@ -4,15 +4,19 @@ import (
 	"schedule/gorm"
 )
 
-func StartSchedule() {
-	students, teachers := new(Students), new(Teachers)
-	pairsNum := 0
-	students.ImportStudents(gorm.GetClient("student"))
-	teachers.ImportTeachers(gorm.GetClient("teacher"))
+var (
+	students map[string]Student
+	teachers map[string]Teacher
+)
 
-	pairsNum = students.CaculateStudentPriority(teachers)
-	teachers.CaculateTeacherPriority()
+func StartSchedule() {
+	pairsNum := 0
+	ImportStudents(gorm.GetClient("student"), students)
+	ImportTeachers(gorm.GetClient("teacher"), teachers)
+
+	pairsNum = CaculateStudentPriority(students, teachers)
+	CaculateTeacherPriority(teachers)
 
 	studyPairs := make([]StudyPair, 0, pairsNum)
-	SortStudyPairs(&studyPairs, students.Students, teachers.Teachers)
+	SortStudyPairs(&studyPairs, students, teachers)
 }

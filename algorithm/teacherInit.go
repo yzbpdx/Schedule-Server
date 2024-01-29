@@ -7,11 +7,13 @@ import (
 	"schedule/logs"
 )
 
-type Teachers struct {
-	Teachers map[string]common.TeacherDict
+type Teacher struct {
+	common.TeacherDict
+	WorkDays [7][3]int
+	Holidays []int
 }
 
-func (t *Teachers) ImportTeachers(clien *sql.DB) {
+func ImportTeachers(clien *sql.DB, teachers map[string]Teacher) {
 	rows, err := clien.Query("select * from teacher")
 	if err != nil {
 		logs.GetInstance().Logger.Errorf("sql query teacher error %s", err)
@@ -20,23 +22,23 @@ func (t *Teachers) ImportTeachers(clien *sql.DB) {
 	defer rows.Close()
 
 	for rows.Next() {
-		var teacherDcit common.TeacherDict
+		var teacher Teacher
 		var spareTimeJSON []byte
-		if err := rows.Scan(&teacherDcit.TeacherId, &teacherDcit.TeacherName, &spareTimeJSON); err != nil {
+		if err := rows.Scan(&teacher.TeacherId, &teacher.TeacherName, &spareTimeJSON, &teacher.Holiday); err != nil {
 			logs.GetInstance().Logger.Errorf("scan student dict error %s", err)
 			continue
 		}
-		if err := json.Unmarshal(spareTimeJSON, &teacherDcit.SpareTime); err != nil {
+		if err := json.Unmarshal(spareTimeJSON, &teacher.SpareTime); err != nil {
 			logs.GetInstance().Logger.Warnf("unmarshal spare time err %s", err)
 			continue
 		}
 
-		t.Teachers[teacherDcit.TeacherName] = teacherDcit
+		teachers[teacher.TeacherName] = teacher
 	}
 }
 
-func (t *Teachers) CaculateTeacherPriority() {
-	for _, tDict := range t.Teachers {
+func CaculateTeacherPriority(teachers map[string]Teacher) {
+	for _, tDict := range teachers {
 		lessonNum, spareNum := len(tDict.Lesson), 0
 		for _, spareTime := range tDict.SpareTime {
 			spareNum += len(spareTime)
@@ -45,14 +47,14 @@ func (t *Teachers) CaculateTeacherPriority() {
 	}
 }
 
-func (t *Teachers) AddTeacherLesson(teacherName, studentName, lessonName string, lessonId int) {
-	if techerDict, ok := t.Teachers[teacherName]; ok {
-		techerDict.Lesson = append(techerDict.Lesson, common.LessonForTeacher{
-			LessonId:    lessonId,
-			LessonName:  lessonName,
-			StudentName: studentName,
-		})
-	} else {
-		logs.GetInstance().Logger.Warnf("find no register teacher %s", teacherName)
-	}
+func (t *Teacher) AddTeacherLesson(lessonName string, lessonId int, sDict *Student) {
+	t.Lesson = append(t.Lesson, common.LessonForTeacher{
+		LessonId:    lessonId,
+		LessonName:  lessonName,
+		StudentName: sDict.StudentName,
+	})
+}
+
+func (t *Teacher) getWorkDays() {
+	
 }

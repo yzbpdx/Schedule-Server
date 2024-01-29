@@ -8,9 +8,9 @@ mysql:
     name: "dyf"
     password: "123"
     addr: "localhost:3306"
-    db: "student"
+    db: "server"
   teacher:
     name: "dyf"
     password: "123"
     addr: "localhost:3306"
-    db: "teacher"
+    db: "server"

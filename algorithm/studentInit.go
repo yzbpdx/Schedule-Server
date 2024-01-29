@@ -7,13 +7,13 @@ import (
 	"schedule/logs"
 )
 
-type Students struct {
-	Students map[string]common.StudentDict
+type Student struct {
+	common.StudentDict
 }
 
-func (s *Students) CaculateStudentPriority(teachers *Teachers) int {
+func CaculateStudentPriority(students map[string]Student, teachers map[string]Teacher) int {
 	pairsNum := 0
-	for sName, sDict := range s.Students {
+	for _, sDict := range students {
 		lessonNum, spareNum := len(sDict.Lesson), 0
 		for _, spareTime := range sDict.SpareTime {
 			spareNum += len(spareTime)
@@ -21,7 +21,9 @@ func (s *Students) CaculateStudentPriority(teachers *Teachers) int {
 		sDict.Priority = float64(lessonNum) / float64(spareNum)
 
 		for _, lesson := range sDict.Lesson {
-			teachers.AddTeacherLesson(lesson.Teacher, sName, lesson.LessonName, lesson.LessonId)
+			if teacher, ok := teachers[lesson.Teacher]; ok {
+				teacher.AddTeacherLesson(lesson.LessonName, lesson.LessonId, &sDict)
+			}
 			pairsNum++
 		}
 	}
@@ -29,7 +31,7 @@ func (s *Students) CaculateStudentPriority(teachers *Teachers) int {
 	return pairsNum
 }
 
-func (s *Students) ImportStudents(clien *sql.DB) {
+func ImportStudents(clien *sql.DB, students map[string]Student) {
 	rows, err := clien.Query("select * from student")
 	if err != nil {
 		logs.GetInstance().Logger.Errorf("sql query student error %s", err)
@@ -38,21 +40,21 @@ func (s *Students) ImportStudents(clien *sql.DB) {
 	defer rows.Close()
 
 	for rows.Next() {
-		var studentDcit common.StudentDict
+		var student Student
 		var spareTimeJSON, lessonJSON []byte
-		if err := rows.Scan(&studentDcit.StudentId, &studentDcit.StudentName, &studentDcit.Class, &spareTimeJSON, &lessonJSON); err != nil {
+		if err := rows.Scan(&student.StudentId, &student.StudentName, &student.Class, &spareTimeJSON, &lessonJSON); err != nil {
 			logs.GetInstance().Logger.Errorf("scan student dict error %s", err)
 			continue
 		}
-		if err := json.Unmarshal(spareTimeJSON, &studentDcit.SpareTime); err != nil {
+		if err := json.Unmarshal(spareTimeJSON, &student.SpareTime); err != nil {
 			logs.GetInstance().Logger.Warnf("unmarshal spare time err %s", err)
 			continue
 		}
-		if err := json.Unmarshal(lessonJSON, &studentDcit.Lesson); err != nil {
+		if err := json.Unmarshal(lessonJSON, &student.Lesson); err != nil {
 			logs.GetInstance().Logger.Warnf("unmarshal lesson err %s", err)
 			continue
 		}
 
-		s.Students[studentDcit.StudentName] = studentDcit
+		students[student.StudentName] = student
 	}
 }

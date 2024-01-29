@@ -1,6 +1,6 @@
 module schedule
 
-go 1.21.5
+go 1.19
 
 require (
 	github.com/go-sql-driver/mysql v1.7.1
@@ -15,5 +15,5 @@ require (
 require (
 	github.com/redis/go-redis/v9 v9.4.0
 	golang.org/x/sys v0.0.0-20220715151400-c0bba94af5f8 // indirect
-	gopkg.in/yaml.v3 v3.0.1 // indirect
+	gopkg.in/yaml.v3 v3.0.1
 )
