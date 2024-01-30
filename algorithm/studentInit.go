@@ -9,6 +9,15 @@ import (
 
 type Student struct {
 	common.StudentDict
+	Priority  float64
+	LessonNum int
+	SpareNum  int
+}
+
+func (s *Student) studentInClass(classLenssonNum int) {
+	s.LessonNum += classLenssonNum
+	s.SpareNum -= classLenssonNum
+	s.Priority = float64(s.LessonNum) / float64(s.SpareNum)
 }
 
 func CaculateStudentPriority(students map[string]Student, teachers map[string]Teacher) int {
@@ -18,7 +27,15 @@ func CaculateStudentPriority(students map[string]Student, teachers map[string]Te
 		for _, spareTime := range sDict.SpareTime {
 			spareNum += len(spareTime)
 		}
+		if sDict.Class != "VIP" && len(sDict.Classmates) != 0 {
+			for classmateName := range sDict.Classmates {
+				classmateDict := students[classmateName]
+				classmateDict.studentInClass(len(sDict.Lesson))
+			}
+		}
 		sDict.Priority = float64(lessonNum) / float64(spareNum)
+		sDict.LessonNum += lessonNum
+		sDict.SpareNum += spareNum
 
 		for _, lesson := range sDict.Lesson {
 			if teacher, ok := teachers[lesson.Teacher]; ok {
@@ -41,8 +58,8 @@ func ImportStudents(clien *sql.DB, students map[string]Student) {
 
 	for rows.Next() {
 		var student Student
-		var spareTimeJSON, lessonJSON []byte
-		if err := rows.Scan(&student.StudentId, &student.StudentName, &student.Class, &spareTimeJSON, &lessonJSON); err != nil {
+		var spareTimeJSON, lessonJSON, classmatesJSON []byte
+		if err := rows.Scan(&student.StudentId, &student.StudentName, &student.Class, &classmatesJSON, &spareTimeJSON, &lessonJSON); err != nil {
 			logs.GetInstance().Logger.Errorf("scan student dict error %s", err)
 			continue
 		}
@@ -52,6 +69,10 @@ func ImportStudents(clien *sql.DB, students map[string]Student) {
 		}
 		if err := json.Unmarshal(lessonJSON, &student.Lesson); err != nil {
 			logs.GetInstance().Logger.Warnf("unmarshal lesson err %s", err)
+			continue
+		}
+		if err := json.Unmarshal(classmatesJSON, &student.Classmates); err != nil {
+			logs.GetInstance().Logger.Warnf("unmarshal classmates err %s", err)
 			continue
 		}
 

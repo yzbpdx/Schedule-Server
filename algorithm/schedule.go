@@ -9,14 +9,23 @@ var (
 	teachers map[string]Teacher
 )
 
+type StudentSchedule struct {
+
+}
+
+// 开始排课
 func StartSchedule() {
-	pairsNum := 0
 	ImportStudents(gorm.GetClient("student"), students)
 	ImportTeachers(gorm.GetClient("teacher"), teachers)
 
-	pairsNum = CaculateStudentPriority(students, teachers)
+	pairsNum := CaculateStudentPriority(students, teachers)
 	CaculateTeacherPriority(teachers)
 
 	studyPairs := make([]StudyPair, 0, pairsNum)
 	SortStudyPairs(&studyPairs, students, teachers)
+}
+
+// 粗粒度生成课程表
+func CoarseSchedule(studyPairs []StudyPair) {
+	
 }

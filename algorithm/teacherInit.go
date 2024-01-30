@@ -5,12 +5,27 @@ import (
 	"encoding/json"
 	"schedule/common"
 	"schedule/logs"
+	"sort"
 )
 
 type Teacher struct {
 	common.TeacherDict
-	WorkDays [7][3]int
-	Holidays []int
+	Lesson           []LessonForTeacher
+	Priority         float64
+	DaysDistribution [7][3]int
+	WorkDays         [7]WorkDay
+	Holidays         map[int]struct{}
+}
+
+type LessonForTeacher struct {
+	LessonId    int
+	LessonName  string
+	StudentName string
+}
+
+type WorkDay struct {
+	WeekDay int
+	WorkNum int
 }
 
 func ImportTeachers(clien *sql.DB, teachers map[string]Teacher) {
@@ -24,7 +39,7 @@ func ImportTeachers(clien *sql.DB, teachers map[string]Teacher) {
 	for rows.Next() {
 		var teacher Teacher
 		var spareTimeJSON []byte
-		if err := rows.Scan(&teacher.TeacherId, &teacher.TeacherName, &spareTimeJSON, &teacher.Holiday); err != nil {
+		if err := rows.Scan(&teacher.TeacherId, &teacher.TeacherName, &spareTimeJSON, &teacher.HolidayNum); err != nil {
 			logs.GetInstance().Logger.Errorf("scan student dict error %s", err)
 			continue
 		}
@@ -48,13 +63,54 @@ func CaculateTeacherPriority(teachers map[string]Teacher) {
 }
 
 func (t *Teacher) AddTeacherLesson(lessonName string, lessonId int, sDict *Student) {
-	t.Lesson = append(t.Lesson, common.LessonForTeacher{
+	t.Lesson = append(t.Lesson, LessonForTeacher{
 		LessonId:    lessonId,
 		LessonName:  lessonName,
 		StudentName: sDict.StudentName,
 	})
 }
 
-func (t *Teacher) getWorkDays() {
-	
+func (t *Teacher) SetDaysDistribution(student Student) {
+	for day, spareTime := range student.SpareTime {
+		for duration := range spareTime {
+			t.DaysDistribution[day][duration]++
+		}
+	}
+
+	t.preConfirmHolidey()
+}
+
+func (t *Teacher) preConfirmHolidey() {
+	for day, distribution := range t.DaysDistribution {
+		t.WorkDays[day] = WorkDay{
+			WeekDay: day,
+			WorkNum: sum(distribution[:]...),
+		}
+	}
+
+	sort.Slice(t.WorkDays, func(i, j int) bool {
+		return t.WorkDays[i].WorkNum < t.WorkDays[j].WorkNum
+	})
+
+	for i := 0; i < t.HolidayNum; i++ {
+		t.Holidays[t.WorkDays[i].WeekDay] = struct{}{}
+	}
+
+	t.updateDaysDistribution()
+}
+
+func (t *Teacher) updateDaysDistribution() {
+	for holiday := range t.Holidays {
+		for i := 0; i < 3; i++ {
+			t.DaysDistribution[holiday][i] = 0
+		}
+	}
+}
+
+func sum(nums ...int) int {
+	sum := 0
+	for _, n := range nums {
+		sum += n
+	}
+	return sum
 }
