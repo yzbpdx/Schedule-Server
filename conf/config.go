@@ -8,8 +8,8 @@ import (
 )
 
 type Config struct {
-	Redis RedisConfig            `yaml:"redis"`
-	MySQL map[string]MySQLConfig `yaml:"mysql"`
+	Redis RedisConfig `yaml:"redis"`
+	MySQL MySQLConfig `yaml:"mysql"`
 }
 
 type RedisConfig struct {

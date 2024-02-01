@@ -4,13 +4,7 @@ redis:
   db: 0
 
 mysql:
-  student:
-    name: "dyf"
-    password: "123"
-    addr: "localhost:3306"
-    db: "server"
-  teacher:
-    name: "dyf"
-    password: "123"
-    addr: "localhost:3306"
-    db: "server"
+  name: "dyf"
+  password: "123"
+  addr: "localhost:3306"
+  db: "schedule"
