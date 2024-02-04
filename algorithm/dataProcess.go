@@ -1,8 +1,11 @@
 package algorithm
 
-import "sort"
+import (
+	"schedule/logs"
+	"sort"
+)
 
-func DispatchLessons(lessons []Lesson, students map[string]Student, teachers map[string]Teacher, classes map[string]Class) {
+func DispatchLessons(lessons []*Lesson, students map[string]*Student, teachers map[string]*Teacher, classes map[string]*Class) {
 	for _, lesson := range lessons {
 		lessonDict := lesson.Dict
 		sName, tName := lessonDict.StudyName, lessonDict.TeacherName
@@ -23,11 +26,13 @@ func DispatchLessons(lessons []Lesson, students map[string]Student, teachers map
 		teacher.dispatchToTeacher()
 		teacher.Lessons[lessonDict.LessonName] = lesson
 	}
+	logs.GetInstance().Logger.Infof("dispatch lessons success")
+	// logs.GetInstance().Logger.Infof("lessons %v %v", teachers["zyh"].Lessons, students["dyf"].Lessons)
 
 	return
 }
 
-func ProcessStudents(students map[string]Student) {
+func ProcessStudents(students map[string]*Student) {
 	for _, student := range students {
 		for _, time := range student.Dict.SpareTime {
 			for duration := range time {
@@ -41,7 +46,7 @@ func ProcessStudents(students map[string]Student) {
 	}
 }
 
-func ProcessTeachers(teachers map[string]Teacher, classes map[string]Class, students map[string]Student) {
+func ProcessTeachers(teachers map[string]*Teacher, classes map[string]*Class, students map[string]*Student) {
 	for _, teacher := range teachers {
 		for _, time := range teacher.Dict.SpareTime {
 			for duration := range time {
@@ -70,8 +75,9 @@ func ProcessTeachers(teachers map[string]Teacher, classes map[string]Class, stud
 				teacher.Extend.WorkDays[i].WorkNum += duration
 			}
 		}
-		sort.Slice(teacher.Extend.WorkDays, func(i, j int) bool {
-			return teacher.Extend.WorkDays[i].WorkNum < teacher.Extend.WorkDays[j].WorkNum
+		slice := teacher.Extend.WorkDays[:]
+		sort.Slice(slice, func(i, j int) bool {
+			return slice[i].WorkNum < slice[j].WorkNum
 		})
 
 		for i := 0; i < teacher.Dict.HolidayNum; i++ {
@@ -81,7 +87,7 @@ func ProcessTeachers(teachers map[string]Teacher, classes map[string]Class, stud
 	}
 }
 
-func ProcessClasses(classes map[string]Class, students map[string]Student) {
+func ProcessClasses(classes map[string]*Class, students map[string]*Student) {
 	for _, class := range classes {
 		classSpareTime := make(map[int]map[int]int)
 		for sName := range class.Dict.ClassMates {
@@ -114,13 +120,13 @@ func ProcessClasses(classes map[string]Class, students map[string]Student) {
 	}
 }
 
-func ProcessLessons(lessons []Lesson, students map[string]Student, teachers map[string]Teacher, classes map[string]Class) {
+func ProcessLessons(lessons []*Lesson, students map[string]*Student, teachers map[string]*Teacher, classes map[string]*Class) {
 	for _, lesson := range lessons {
 		teacher := teachers[lesson.Dict.TeacherName]
 		teacherTime := teacher.Dict.SpareTime
 		var studyTime map[int]map[int]struct{}
 		var studyPrioirty float64
-		var studyLessons map[string]Lesson
+		var studyLessons map[string]*Lesson
 		if lesson.Dict.StudentNum > 1 {
 			class := classes[lesson.Dict.StudyName]
 			studyTime = class.Extend.SpareTime

@@ -12,7 +12,7 @@ import (
 type Student struct {
 	Dict   common.StudentDict
 	Extend StudentExtend
-	Lessons map[string]Lesson
+	Lessons map[string]*Lesson
 }
 
 type StudentExtend struct {
@@ -24,7 +24,7 @@ type StudentExtend struct {
 type Teacher struct {
 	Dict   common.TeacherDict
 	Extend TeacherExtend
-	Lessons map[string]Lesson
+	Lessons map[string]*Lesson
 }
 
 type TeacherExtend struct {
@@ -44,7 +44,7 @@ type WorkDay struct {
 type Class struct {
 	Dict common.ClassDict
 	Extend ClassExtend
-	Lessons map[string]Lesson
+	Lessons map[string]*Lesson
 }
 
 type ClassExtend struct {
@@ -72,8 +72,8 @@ type CandidateDay struct {
 }
 
 // 从sql中加载学生信息
-func ImportStudents(db *gorm.DB) map[string]Student {
-	students := make(map[string]Student)
+func ImportStudents(db *gorm.DB) map[string]*Student {
+	students := make(map[string]*Student)
 	rows := make([]mysql.StudentSql, 0)
 	result := db.Find(&rows, "status = ?", true)
 	if result.Error != nil {
@@ -88,23 +88,24 @@ func ImportStudents(db *gorm.DB) map[string]Student {
 			continue
 		}
 
-		students[row.StudentName] = Student{
+		students[row.StudentName] = &Student{
 			Dict: common.StudentDict{
 				StudentId: row.StudentId,
 				StudentName: row.StudentName,
 				SpareTime: spareTime,
 			},
 			Extend: StudentExtend{},
-			Lessons: make(map[string]Lesson),
+			Lessons: make(map[string]*Lesson),
 		}
 	}
+	logs.GetInstance().Logger.Infof("import %d students form database", len(students))
 
 	return students
 }
 
 // 从sql中加载老师信息
-func ImportTeachers(db *gorm.DB) map[string]Teacher {
-	teachers := make((map[string]Teacher))
+func ImportTeachers(db *gorm.DB) map[string]*Teacher {
+	teachers := make((map[string]*Teacher))
 	rows := make([]mysql.TeacherSql, 0)
 	result := db.Find(&rows, "status = ?", true)
 	if result.Error != nil {
@@ -119,7 +120,7 @@ func ImportTeachers(db *gorm.DB) map[string]Teacher {
 			continue
 		}
 
-		teachers[row.TeacherName] = Teacher{
+		teachers[row.TeacherName] = &Teacher{
 			Dict: common.TeacherDict{
 				TeacherId: row.TeacherId,
 				TeacherName: row.TeacherName,
@@ -131,16 +132,17 @@ func ImportTeachers(db *gorm.DB) map[string]Teacher {
 				WorkDays: [7]WorkDay{},
 				DaysDistribution: [7][3]int{},
 			},
-			Lessons: make(map[string]Lesson),
+			Lessons: make(map[string]*Lesson),
 		}
 	}
+	logs.GetInstance().Logger.Infof("import %d teachers form database", len(teachers))
 
 	return teachers
 }
 
 // 从sql中加载班级信息
-func ImportClasses(db *gorm.DB) map[string]Class {
-	classes := make((map[string]Class))
+func ImportClasses(db *gorm.DB) map[string]*Class {
+	classes := make((map[string]*Class))
 	rows := make([]mysql.ClassSql, 0)
 	result := db.Find(&rows, "status = ?", true)
 	if result.Error != nil {
@@ -155,7 +157,7 @@ func ImportClasses(db *gorm.DB) map[string]Class {
 			continue
 		}
 
-		classes[row.ClassName] = Class{
+		classes[row.ClassName] = &Class{
 			Dict: common.ClassDict{
 				ClassId: row.ClassId,
 				ClassName: row.ClassName,
@@ -164,25 +166,26 @@ func ImportClasses(db *gorm.DB) map[string]Class {
 			Extend: ClassExtend{
 				SpareTime: make(map[int]map[int]struct{}),
 			},
-			Lessons: make(map[string]Lesson),
+			Lessons: make(map[string]*Lesson),
 		}
 	}
+	logs.GetInstance().Logger.Infof("import %d classes form database", len(classes))
 
 	return classes
 }
 
 // 从sql中加载课程信息
-func ImportLessons(db *gorm.DB) []Lesson {
+func ImportLessons(db *gorm.DB) []*Lesson {
 	rows := make([]mysql.LessonSql, 0)
 	result := db.Find(&rows)
 	if result.Error != nil {
 		logs.GetInstance().Logger.Errorf("sql query student error %s", result.Error)
-		return []Lesson{}
+		return []*Lesson{}
 	}
 
-	lessons := make([]Lesson, len(rows))
+	lessons := make([]*Lesson, len(rows))
 	for i, row := range rows {
-		lessons[i] = Lesson{
+		lessons[i] = &Lesson{
 			Dict: common.LessonDict{
 				LessonId: row.LessonId,
 				LessonName: row.LessonName,
@@ -196,6 +199,7 @@ func ImportLessons(db *gorm.DB) []Lesson {
 			},
 		}
 	}
+	logs.GetInstance().Logger.Infof("import %d lessons form database", len(lessons))
 
 	return lessons
 }

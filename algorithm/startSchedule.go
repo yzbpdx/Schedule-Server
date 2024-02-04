@@ -3,13 +3,14 @@ package algorithm
 import (
 	"bytes"
 	"encoding/gob"
+	"schedule/common"
 	"schedule/logs"
 	"schedule/mysql"
 )
 
 type LessonResult struct {
 	IfSchedule bool
-	Lesson Lesson
+	Lesson *Lesson
 }
 
 type ScheduleResult struct {
@@ -18,14 +19,14 @@ type ScheduleResult struct {
 }
 
 type Schedule struct {
-	Students map[string]Student
-	Classes map[string]Class
-	Teachers map[string]Teacher
-	Lessons []Lesson
+	Students map[string]*Student
+	Classes map[string]*Class
+	Teachers map[string]*Teacher
+	Lessons []*Lesson
 
 	FinalResult ScheduleResult
 	TmpResult ScheduleResult
-	UnScheduleLessons []Lesson
+	UnScheduleLessons []*Lesson
 	UnPerfectResult ScheduleResult
 
 	LessonNum int
@@ -58,7 +59,7 @@ func StartSchedule() {
 		StudentResult: make(map[string][7][3]LessonResult),
 		TeacherResult: make(map[string][7][3]LessonResult),
 	}
-	schedule.UnScheduleLessons = make([]Lesson, 0)
+	schedule.UnScheduleLessons = make([]*Lesson, 0)
 	schedule.UnPerfectResult = ScheduleResult{
 		StudentResult: make(map[string][7][3]LessonResult),
 		TeacherResult: make(map[string][7][3]LessonResult),
@@ -66,6 +67,9 @@ func StartSchedule() {
 	schedule.LessonNum = len(schedule.Lessons)
 
 	schedule.BacktrackingSchedule(0, 0)
+	logs.GetInstance().Logger.Infof("finish schedule")
+	// logs.GetInstance().Logger.Infof("final result %v", schedule.FinalResult)
+	// logs.GetInstance().Logger.Infof("lesson %v", schedule.FinalResult.StudentResult["dyf"][1][2].Lesson)
 }
 
 func (s *Schedule) BacktrackingSchedule(startIndex, finishNum int) {
@@ -141,7 +145,7 @@ func (s *Schedule) BacktrackingSchedule(startIndex, finishNum int) {
 					studentResult := s.TmpResult.StudentResult[stu]
 					studentResult[day][duration] = LessonResult{
 						IfSchedule: false,
-						Lesson: Lesson{},
+						Lesson: &Lesson{},
 					}
 					s.TmpResult.StudentResult[stu] = studentResult
 				}
@@ -149,14 +153,14 @@ func (s *Schedule) BacktrackingSchedule(startIndex, finishNum int) {
 				studentResult := s.TmpResult.StudentResult[sName]
 				studentResult[day][duration] = LessonResult{
 					IfSchedule: false,
-					Lesson: Lesson{},
+					Lesson: &Lesson{},
 				}
 				s.TmpResult.StudentResult[sName] = studentResult
 			}
 			teacherResult = s.TmpResult.TeacherResult[tName]
 			teacherResult[day][duration] = LessonResult{
 				IfSchedule: false,
-				Lesson: Lesson{},
+				Lesson: &Lesson{},
 			}
 			s.TmpResult.TeacherResult[tName] = teacherResult
 		}
@@ -189,6 +193,12 @@ func (s *Schedule) checkLessonTimeConfict(day, duration int, sName, tName string
 
 func deepCopy(r ScheduleResult) *ScheduleResult {
 	var buf bytes.Buffer
+	gob.Register(ScheduleResult{})
+	gob.Register(LessonResult{})
+	gob.Register(Lesson{})
+	gob.Register(common.LessonDict{})
+	gob.Register(LessonExtend{})
+	gob.Register(CandidateDay{})
 	encode := gob.NewEncoder(&buf)
 	decode := gob.NewDecoder(&buf)
 

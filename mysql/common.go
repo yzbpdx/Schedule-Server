@@ -22,7 +22,7 @@ type TeacherSql struct {
 }
 
 func (t TeacherSql) TableName() string {
-	return "teaherts"
+	return "teachers"
 }
 
 type ClassSql struct {

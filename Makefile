@@ -1,6 +1,6 @@
 TARGET_NAME=schedule
 
-nas_server: clean
+schedule: clean
 	go clean ./...
 	go build -o ${TARGET_NAME} ./main.go
 
