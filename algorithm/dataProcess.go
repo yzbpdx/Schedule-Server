@@ -1,10 +1,12 @@
 package algorithm
 
 import (
+	_ "fmt"
 	"schedule/logs"
 	"sort"
 )
 
+// 分发课程到每个实体
 func DispatchLessons(lessons []*Lesson, students map[string]*Student, teachers map[string]*Teacher, classes map[string]*Class) {
 	for _, lesson := range lessons {
 		lessonDict := lesson.Dict
@@ -32,6 +34,7 @@ func DispatchLessons(lessons []*Lesson, students map[string]*Student, teachers m
 	return
 }
 
+// 处理学生extend数据
 func ProcessStudents(students map[string]*Student) {
 	for _, student := range students {
 		for _, time := range student.Dict.SpareTime {
@@ -46,6 +49,7 @@ func ProcessStudents(students map[string]*Student) {
 	}
 }
 
+// 处理老师extend数据
 func ProcessTeachers(teachers map[string]*Teacher, classes map[string]*Class, students map[string]*Student) {
 	for _, teacher := range teachers {
 		for _, time := range teacher.Dict.SpareTime {
@@ -83,23 +87,24 @@ func ProcessTeachers(teachers map[string]*Teacher, classes map[string]*Class, st
 		for i := 0; i < teacher.Dict.HolidayNum; i++ {
 			teacher.Extend.Holidays[teacher.Extend.WorkDays[i].Day] = struct{}{}
 		}
-		teacher.updateDaysDistribution()
+		// teacher.updateDaysDistribution()
 	}
 }
 
+// 处理班级extend数据
 func ProcessClasses(classes map[string]*Class, students map[string]*Student) {
 	for _, class := range classes {
 		classSpareTime := make(map[int]map[int]int)
 		for sName := range class.Dict.ClassMates {
 			student := students[sName]
 			for day, time := range student.Dict.SpareTime {
-				if spare, ok := classSpareTime[day]; !ok {
+				if _, ok := classSpareTime[day]; !ok {
 					classSpareTime[day] = make(map[int]int)
-				} else {
-					for duration := range time {
-						if checkDuration(duration) {
-							spare[duration]++
-						}
+				}
+				spare := classSpareTime[day]
+				for duration := range time {
+					if checkDuration(duration) {
+						spare[duration]++
 					}
 				}
 			}
@@ -108,18 +113,21 @@ func ProcessClasses(classes map[string]*Class, students map[string]*Student) {
 		for day, time := range classSpareTime {
 			for duration, num := range time {
 				if num == len(class.Dict.ClassMates) {
-					if spare, ok := class.Extend.SpareTime[day]; !ok {
+					if _, ok := class.Extend.SpareTime[day]; !ok {
 						class.Extend.SpareTime[day] = make(map[int]struct{})
-					} else {
-						spare[duration] = struct{}{}
-						class.Extend.SpareNum++
 					}
+					spare := class.Extend.SpareTime[day]
+					spare[duration] = struct{}{}
+					class.Extend.SpareNum++
 				}
 			}
 		}
+
+		class.Extend.Priority = float64(class.Extend.LessonNum) / float64(class.Extend.SpareNum)
 	}
 }
 
+// 处理课程extend数据
 func ProcessLessons(lessons []*Lesson, students map[string]*Student, teachers map[string]*Teacher, classes map[string]*Class) {
 	for _, lesson := range lessons {
 		teacher := teachers[lesson.Dict.TeacherName]
@@ -148,6 +156,9 @@ func ProcessLessons(lessons []*Lesson, students map[string]*Student, teachers ma
 		for _, studyLesson := range studyLessons {
 			lessonTeacher := teachers[studyLesson.Dict.TeacherName]
 			for i, time := range lessonTeacher.Extend.DaysDistribution {
+				if _, ok := lessonTeacher.Extend.Holidays[i]; ok {
+					continue
+				}
 				for j, workNum := range time {
 					teachersDays[i][j] = lessonTeacher.Extend.Priority * float64(workNum)
 				}
@@ -163,10 +174,13 @@ func ProcessLessons(lessons []*Lesson, students map[string]*Student, teachers ma
 			}
 		}
 		sort.Slice(candidateDays, func(i, j int) bool {
-			return candidateDays[i].Priority < candidateDays[j].Priority
+			return candidateDays[i].Priority > candidateDays[j].Priority
 		})
 		lesson.Extend.CandidateDays = candidateDays
 	}
+	sort.Slice(lessons, func(i, j int) bool {
+		return lessons[i].Extend.Priority > lessons[j].Extend.Priority
+	})
 }
 
 func (s *Student) dispatchToStudent() {
@@ -181,6 +195,7 @@ func (c *Class) dispatchToClass() {
 	c.Extend.LessonNum++
 }
 
+// 计算老师可能工作时间分布
 func (t *Teacher) setDaysDistribution(spareTimeMap map[int]map[int]struct{}) {
 	var spareTime [7][3]int
 	for day, time := range spareTimeMap {
@@ -194,6 +209,7 @@ func (t *Teacher) setDaysDistribution(spareTimeMap map[int]map[int]struct{}) {
 	t.addDays(spareTime)
 }
 
+// 添加老师可能工作时间分布
 func (t *Teacher) addDays(workNum [7][3]int) {
 	for i, work := range workNum {
 		for j, num := range work {
@@ -202,6 +218,7 @@ func (t *Teacher) addDays(workNum [7][3]int) {
 	}
 }
 
+// 更新老师可能工作时间分布
 func (t *Teacher) updateDaysDistribution() {
 	for holiday := range t.Extend.Holidays {
 		for i := 0; i < 3; i++ {
@@ -217,6 +234,7 @@ func checkDuration(duration int) bool {
 	return false
 }
 
+// 得到课程可能安排的时间
 func getLessonPossibleDays(studyTime, teacherTime map[int]map[int]struct{}, teacherHolidy map[int]struct{}) (int, map[int]map[int]struct{}) {
 	days, spareTime := 0, make(map[int]map[int]struct{})
 	for tDay, tTime := range teacherTime {

@@ -20,21 +20,22 @@ type ScheduleResult struct {
 
 type Schedule struct {
 	Students map[string]*Student
-	Classes map[string]*Class
+	Classes  map[string]*Class
 	Teachers map[string]*Teacher
-	Lessons []*Lesson
+	Lessons  []*Lesson
 
-	FinalResult ScheduleResult
-	TmpResult ScheduleResult
+	FinalResult       ScheduleResult
+	TmpResult         ScheduleResult
 	UnScheduleLessons []*Lesson
-	UnPerfectResult ScheduleResult
+	UnPerfectResult   ScheduleResult
 
-	LessonNum int
+	LessonNum  int
 	FindResult bool
-	FinishNum int
-	StartFrom int
+	FinishNum  int
+	StartFrom  int
 }
 
+// 回溯初排课程，得到初排结果
 func StartSchedule() {
 	students := ImportStudents(mysql.GetClient())
 	classes := ImportClasses(mysql.GetClient())
@@ -66,13 +67,13 @@ func StartSchedule() {
 	}
 	schedule.LessonNum = len(schedule.Lessons)
 
-	schedule.BacktrackingSchedule(0, 0)
-	logs.GetInstance().Logger.Infof("finish schedule")
+	schedule.backtrackingSchedule(0, 0)
+	logs.GetInstance().Logger.Infof("finish schedule with %v unscheduled lesson", len(schedule.UnScheduleLessons))
 	// logs.GetInstance().Logger.Infof("final result %v", schedule.FinalResult)
 	// logs.GetInstance().Logger.Infof("lesson %v", schedule.FinalResult.StudentResult["dyf"][1][2].Lesson)
 }
 
-func (s *Schedule) BacktrackingSchedule(startIndex, finishNum int) {
+func (s *Schedule) backtrackingSchedule(startIndex, finishNum int) {
 	if s.FindResult {
 		return
 	}
@@ -136,8 +137,12 @@ func (s *Schedule) BacktrackingSchedule(startIndex, finishNum int) {
 				IfSchedule: true,
 				Lesson: lesson,
 			}
+			logs.GetInstance().Logger.Infof("set %v at day %v duration %v", lesson.Dict.StudyName, day, duration)
 			s.TmpResult.TeacherResult[tName] = teacherResult
-			s.BacktrackingSchedule(i + 1, finishNum)
+			s.backtrackingSchedule(i + 1, finishNum)
+			if s.FindResult {
+				return
+			}
 			finishNum--
 			if isClass {
 				classMates := s.Classes[sName].Dict.ClassMates
@@ -169,7 +174,7 @@ func (s *Schedule) BacktrackingSchedule(startIndex, finishNum int) {
 	if !s.FindResult {
 		s.TmpResult = *deepCopy(s.UnPerfectResult)
 		s.UnScheduleLessons = append(s.UnScheduleLessons, s.Lessons[s.StartFrom])
-		s.BacktrackingSchedule(s.StartFrom + 1, s.FinishNum + 1)
+		s.backtrackingSchedule(s.StartFrom + 1, s.FinishNum + 1)
 	}
 }
 
