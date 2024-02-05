@@ -42,7 +42,7 @@ func deleteStudentHandler(ctx *gin.Context, id int) {
 		return
 	}
 
-	ctx.JSON(http.StatusOK, gin.H{})
+	showStudentsHandler(ctx)
 }
 
 func deleteClassHandler(ctx *gin.Context, id int) {
@@ -54,7 +54,7 @@ func deleteClassHandler(ctx *gin.Context, id int) {
 		return
 	}
 
-	ctx.JSON(http.StatusOK, gin.H{})
+	showClassesHandler(ctx)
 }
 
 func deleteTeacherHandler(ctx *gin.Context, id int) {
@@ -66,7 +66,7 @@ func deleteTeacherHandler(ctx *gin.Context, id int) {
 		return
 	}
 
-	ctx.JSON(http.StatusOK, gin.H{})
+	showTeachersHandler(ctx)
 }
 
 func deleteLessonHandler(ctx *gin.Context, id int) {
@@ -78,5 +78,5 @@ func deleteLessonHandler(ctx *gin.Context, id int) {
 		return
 	}
 
-	ctx.JSON(http.StatusOK, gin.H{})
+	showLessonsHandler(ctx)
 }

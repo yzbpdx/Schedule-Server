@@ -26,10 +26,10 @@ func (t TeacherSql) TableName() string {
 }
 
 type ClassSql struct {
-	ClassId    int    `gorm:"column:classId"`
-	ClassName  string `gorm:"column:className"`
-	ClassMates []byte `gorm:"column:classMates"`
-	Status     bool   `gorm:"column:status"`
+	ClassId    int    `json:"classId" gorm:"column:classId"`
+	ClassName  string `json:"className" gorm:"column:className"`
+	ClassMates []byte `json:"classMates" gorm:"column:classMates"`
+	Status     bool   `json:"status" gorm:"column:status"`
 }
 
 func (c ClassSql) TableName() string {
