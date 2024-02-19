@@ -3,6 +3,7 @@ package algorithm
 import (
 	"bytes"
 	"encoding/gob"
+	"fmt"
 	"schedule/common"
 	"schedule/logs"
 	"schedule/mysql"
@@ -67,17 +68,18 @@ func StartSchedule() {
 	}
 	schedule.LessonNum = len(schedule.Lessons)
 
-	schedule.backtrackingSchedule(0, 0)
+	schedule.backTrackingSchedule(0, 0)
 	logs.GetInstance().Logger.Infof("finish schedule with %v unscheduled lesson", len(schedule.UnScheduleLessons))
 	// logs.GetInstance().Logger.Infof("final result %v", schedule.FinalResult)
 	// logs.GetInstance().Logger.Infof("lesson %v", schedule.FinalResult.StudentResult["dyf"][1][2].Lesson)
 }
 
-func (s *Schedule) backtrackingSchedule(startIndex, finishNum int) {
+// 回溯课程的可能安排时间得到最终结果或者得到未完全成功和冲突课程的结果
+func (s *Schedule) backTrackingSchedule(startIndex, finishNum int) {
 	if s.FindResult {
 		return
 	}
-	if finishNum == s.LessonNum {
+	if startIndex == s.LessonNum {
 		s.FindResult = true
 		s.FinalResult = *deepCopy(s.TmpResult)
 		return
@@ -88,6 +90,7 @@ func (s *Schedule) backtrackingSchedule(startIndex, finishNum int) {
 		s.StartFrom = startIndex
 		s.UnPerfectResult = *deepCopy(s.TmpResult)
 	}
+	fmt.Println(s.StartFrom)
 
 	for i := startIndex; i < s.LessonNum; i++ {
 		lesson := s.Lessons[i]
@@ -105,7 +108,9 @@ func (s *Schedule) backtrackingSchedule(startIndex, finishNum int) {
 			}
 			isClass = true
 		} else if lesson.Dict.StudentNum == 1 {
-			s.TmpResult.StudentResult[sName] = [7][3]LessonResult{}
+			if _, ok := s.TmpResult.StudentResult[sName]; !ok {
+				s.TmpResult.StudentResult[sName] = [7][3]LessonResult{}
+			}
 		}
 
 		for _, candidateDay := range lesson.Extend.CandidateDays {
@@ -137,9 +142,9 @@ func (s *Schedule) backtrackingSchedule(startIndex, finishNum int) {
 				IfSchedule: true,
 				Lesson: lesson,
 			}
-			logs.GetInstance().Logger.Infof("set %v at day %v duration %v", lesson.Dict.StudyName, day, duration)
+			logs.GetInstance().Logger.Infof("set %v %v at day %v duration %v with %v", lesson.Dict.StudyName, lesson.Dict.TeacherName, day, duration, lesson.Extend.Priority)
 			s.TmpResult.TeacherResult[tName] = teacherResult
-			s.backtrackingSchedule(i + 1, finishNum)
+			s.backTrackingSchedule(i + 1, finishNum)
 			if s.FindResult {
 				return
 			}
@@ -169,15 +174,23 @@ func (s *Schedule) backtrackingSchedule(startIndex, finishNum int) {
 			}
 			s.TmpResult.TeacherResult[tName] = teacherResult
 		}
-	}
 
-	if !s.FindResult {
 		s.TmpResult = *deepCopy(s.UnPerfectResult)
 		s.UnScheduleLessons = append(s.UnScheduleLessons, s.Lessons[s.StartFrom])
-		s.backtrackingSchedule(s.StartFrom + 1, s.FinishNum + 1)
+		logs.GetInstance().Logger.Infof("find conflict at %v", s.StartFrom)
+		logs.GetInstance().Logger.Infof("studyName %v teacherName %v", s.Lessons[s.StartFrom].Dict.StudyName, s.Lessons[s.StartFrom].Dict.TeacherName)
+		// s.backTrackingSchedule(s.StartFrom + 1, s.FinishNum + 1)
 	}
+
+	// if !s.FindResult {
+	// 	s.TmpResult = *deepCopy(s.UnPerfectResult)
+	// 	s.UnScheduleLessons = append(s.UnScheduleLessons, s.Lessons[s.StartFrom])
+	// 	logs.GetInstance().Logger.Infof("find conflict at %v", s.StartFrom)
+	// 	s.backTrackingSchedule(s.StartFrom + 1, s.FinishNum + 1)
+	// }
 }
 
+// 检查当前时间是否与已经安排课程有冲突
 func (s *Schedule) checkLessonTimeConfict(day, duration int, sName, tName string, isClass bool) bool {
 	if s.TmpResult.TeacherResult[tName][day][duration].IfSchedule {
 		return true
@@ -196,6 +209,7 @@ func (s *Schedule) checkLessonTimeConfict(day, duration int, sName, tName string
 	return false
 }
 
+// 深拷贝临时结果
 func deepCopy(r ScheduleResult) *ScheduleResult {
 	var buf bytes.Buffer
 	gob.Register(ScheduleResult{})

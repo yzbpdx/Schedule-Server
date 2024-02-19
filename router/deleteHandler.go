@@ -13,6 +13,7 @@ type Delete struct {
 	DeleteId   int    `json:"deleteId"`
 }
 
+// 处理删除
 func DeleteHandler(ctx *gin.Context) {
 	var delete Delete
 	if err := ctx.ShouldBindJSON(&delete); err != nil {
@@ -33,6 +34,7 @@ func DeleteHandler(ctx *gin.Context) {
 	}
 }
 
+// 处理删除学生
 func deleteStudentHandler(ctx *gin.Context, id int) {
 	db := mysql.GetClient()
 	err := db.Where("studentId = ?", id).Delete(&mysql.StudentSql{})
@@ -45,6 +47,7 @@ func deleteStudentHandler(ctx *gin.Context, id int) {
 	showStudentsHandler(ctx)
 }
 
+// 处理删除课程
 func deleteClassHandler(ctx *gin.Context, id int) {
 	db := mysql.GetClient()
 	err := db.Where("classId = ?", id).Delete(&mysql.ClassSql{})
@@ -57,6 +60,7 @@ func deleteClassHandler(ctx *gin.Context, id int) {
 	showClassesHandler(ctx)
 }
 
+// 处理删除老师
 func deleteTeacherHandler(ctx *gin.Context, id int) {
 	db := mysql.GetClient()
 	err := db.Where("teacherId = ?", id).Delete(&mysql.TeacherSql{})
@@ -69,6 +73,7 @@ func deleteTeacherHandler(ctx *gin.Context, id int) {
 	showTeachersHandler(ctx)
 }
 
+// 处理删除课程
 func deleteLessonHandler(ctx *gin.Context, id int) {
 	db := mysql.GetClient()
 	err := db.Where("lessonId = ?", id).Delete(&mysql.LessonSql{})

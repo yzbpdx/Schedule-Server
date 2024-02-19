@@ -12,6 +12,7 @@ type ShowType struct {
 	ShowType string `json:"showType"`
 }
 
+// 处理展示
 func ShowHandler(ctx *gin.Context) {
 	var showType ShowType
 	if err := ctx.ShouldBindJSON(&showType); err != nil {
@@ -32,6 +33,7 @@ func ShowHandler(ctx *gin.Context) {
 	}
 }
 
+// 处理展示学生
 func showStudentsHandler(ctx *gin.Context) {
 	db := mysql.GetClient()
 	results := make([]mysql.StudentSql, 0)
@@ -43,6 +45,7 @@ func showStudentsHandler(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, gin.H{"results": results})
 }
 
+// 处理展示班级
 func showClassesHandler(ctx *gin.Context) {
 	db := mysql.GetClient()
 	results := make([]mysql.ClassSql, 0)
@@ -54,6 +57,7 @@ func showClassesHandler(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, gin.H{"results": results})
 }
 
+// 处理展示老师
 func showTeachersHandler(ctx *gin.Context) {
 	db := mysql.GetClient()
 	results := make([]mysql.TeacherSql, 0)
@@ -65,6 +69,7 @@ func showTeachersHandler(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, gin.H{"results": results})
 }
 
+// 处理展示课程
 func showLessonsHandler(ctx *gin.Context) {
 	db := mysql.GetClient()
 	results := make([]mysql.LessonSql, 0)

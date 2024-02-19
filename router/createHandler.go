@@ -12,6 +12,7 @@ type Create struct {
 	CreateType string `json:"createType"`
 }
 
+// 处理新建信息
 func CreateHandler(ctx *gin.Context) {
 	var create Create
 	if err := ctx.ShouldBindJSON(&create); err != nil {
@@ -32,6 +33,7 @@ func CreateHandler(ctx *gin.Context) {
 	}
 }
 
+// 处理新建学生信息
 func createStudentHandler(ctx *gin.Context) {
 	var student mysql.StudentSql
 	if err := ctx.ShouldBindJSON(&student); err != nil {
@@ -50,6 +52,7 @@ func createStudentHandler(ctx *gin.Context) {
 	showStudentsHandler(ctx)
 }
 
+// 处理新建课程信息
 func createClassHandler(ctx *gin.Context) {
 	var class mysql.ClassSql
 	if err := ctx.ShouldBindJSON(&class); err != nil {
@@ -68,6 +71,7 @@ func createClassHandler(ctx *gin.Context) {
 	showClassesHandler(ctx)
 }
 
+// 处理新建老师信息
 func createTeacherHandler(ctx *gin.Context) {
 	var teacher mysql.TeacherSql
 	if err := ctx.ShouldBindJSON(&teacher); err != nil {
@@ -86,6 +90,7 @@ func createTeacherHandler(ctx *gin.Context) {
 	showTeachersHandler(ctx)
 }
 
+// 处理新建课程信息
 func createLessonHandler(ctx *gin.Context) {
 	var lesson mysql.LessonSql
 	if err := ctx.ShouldBindJSON(&lesson); err != nil {

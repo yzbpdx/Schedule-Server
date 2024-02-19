@@ -124,6 +124,7 @@ func ProcessClasses(classes map[string]*Class, students map[string]*Student) {
 		}
 
 		class.Extend.Priority = float64(class.Extend.LessonNum) / float64(class.Extend.SpareNum)
+		logs.GetInstance().Logger.Infof("%v spare time %v", class.Dict.ClassName, class.Extend.SpareTime)
 	}
 }
 
@@ -183,14 +184,17 @@ func ProcessLessons(lessons []*Lesson, students map[string]*Student, teachers ma
 	})
 }
 
+// 课程分发至学生
 func (s *Student) dispatchToStudent() {
 	s.Extend.LessonNum++
 }
 
+// 课程分发至老师
 func (t *Teacher) dispatchToTeacher() {
 	t.Extend.LessonNum++
 }
 
+// 课程分发至班级
 func (c *Class) dispatchToClass() {
 	c.Extend.LessonNum++
 }
@@ -227,6 +231,7 @@ func (t *Teacher) updateDaysDistribution() {
 	}
 }
 
+// 检查时间段是否在初始排课范围
 func checkDuration(duration int) bool {
 	if duration >= 0 && duration < 3 {
 		return true

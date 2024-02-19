@@ -12,6 +12,7 @@ type Update struct {
 	UpdateType string `json:"updateType"`
 }
 
+// 处理更新
 func UpdateHandler(ctx *gin.Context) {
 	var update Update
 	if err := ctx.ShouldBindJSON(&update); err != nil {
@@ -32,6 +33,7 @@ func UpdateHandler(ctx *gin.Context) {
 	}
 }
 
+// 处理更新学生
 func updateStudentHandler(ctx *gin.Context) {
 	var student mysql.StudentSql
 	if err := ctx.ShouldBindJSON(&student); err != nil {
@@ -50,6 +52,7 @@ func updateStudentHandler(ctx *gin.Context) {
 	showStudentsHandler(ctx)
 }
 
+// 处理更新课程
 func updateClassHandler(ctx *gin.Context) {
 	var class mysql.ClassSql
 	if err := ctx.ShouldBindJSON(&class); err != nil {
@@ -68,6 +71,7 @@ func updateClassHandler(ctx *gin.Context) {
 	showClassesHandler(ctx)
 }
 
+// 处理更新老师
 func updateTeacherHandler(ctx *gin.Context) {
 	var teacher mysql.TeacherSql
 	if err := ctx.ShouldBindJSON(&teacher); err != nil {
@@ -86,6 +90,7 @@ func updateTeacherHandler(ctx *gin.Context) {
 	showTeachersHandler(ctx)
 }
 
+// 处理更新课程
 func updateLessonHandler(ctx *gin.Context) {
 	var lesson mysql.LessonSql
 	if err := ctx.ShouldBindJSON(&lesson); err != nil {

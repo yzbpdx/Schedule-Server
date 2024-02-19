@@ -11,6 +11,7 @@ import (
 
 var db *gorm.DB
 
+// 初始化gorm
 func MysqlInit(config config.MySQLConfig) {
 	dataSourceName := fmt.Sprintf("%s:%s@tcp(%s)/%s", config.Name, config.PassWord, config.Addr, config.DB)
 	DB, err := gorm.Open(mysql.Open(dataSourceName))
@@ -20,6 +21,7 @@ func MysqlInit(config config.MySQLConfig) {
 	db = DB
 }
 
+// 返回gorm对象
 func GetClient() *gorm.DB {
 	return db
 }

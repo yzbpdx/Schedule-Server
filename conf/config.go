@@ -25,6 +25,7 @@ type MySQLConfig struct {
 	DB       string `yaml:"db"`
 }
 
+// 初始化配置
 func InitServerConfig(fileName string) {
 	configFile, err := os.ReadFile(fileName)
 	if err != nil {
@@ -39,6 +40,7 @@ func InitServerConfig(fileName string) {
 
 var config = &Config{}
 
+// 返回配置对象
 func GetServerConfig() *Config {
 	return config
 }
