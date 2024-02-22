@@ -1,7 +1,7 @@
 package algorithm
 
 import (
-	_ "fmt"
+	"schedule/common"
 	"schedule/logs"
 	"sort"
 )
@@ -35,11 +35,13 @@ func DispatchLessons(lessons []*Lesson, students map[string]*Student, teachers m
 }
 
 // 处理学生extend数据
-func ProcessStudents(students map[string]*Student) {
+func ProcessStudents(students map[string]*Student, originDuration bool) {
 	for _, student := range students {
 		for _, time := range student.Dict.SpareTime {
 			for duration := range time {
-				if checkDuration(duration) {
+				if originDuration && checkDuration(duration) {
+					student.Extend.SpareNum++
+				} else if !originDuration && !checkDuration(duration) {
 					student.Extend.SpareNum++
 				}
 			}
@@ -50,11 +52,13 @@ func ProcessStudents(students map[string]*Student) {
 }
 
 // 处理老师extend数据
-func ProcessTeachers(teachers map[string]*Teacher, classes map[string]*Class, students map[string]*Student) {
+func ProcessTeachers(teachers map[string]*Teacher, classes map[string]*Class, students map[string]*Student, originDuration bool) {
 	for _, teacher := range teachers {
 		for _, time := range teacher.Dict.SpareTime {
 			for duration := range time {
-				if checkDuration(duration) {
+				if originDuration && checkDuration(duration) {
+					teacher.Extend.SpareNum++
+				} else if !originDuration && !checkDuration(duration) {
 					teacher.Extend.SpareNum++
 				}
 			}
@@ -66,10 +70,10 @@ func ProcessTeachers(teachers map[string]*Teacher, classes map[string]*Class, st
 			sName := lesson.Dict.StudyName
 			if lesson.Dict.StudentNum > 1 {
 				class := classes[sName]
-				teacher.setDaysDistribution(class.Extend.SpareTime)
+				teacher.setDaysDistribution(class.Extend.SpareTime, originDuration)
 			} else if lesson.Dict.StudentNum == 1 {
 				student := students[sName]
-				teacher.setDaysDistribution(student.Dict.SpareTime)
+				teacher.setDaysDistribution(student.Dict.SpareTime, originDuration)
 			}
 		}
 
@@ -79,20 +83,23 @@ func ProcessTeachers(teachers map[string]*Teacher, classes map[string]*Class, st
 				teacher.Extend.WorkDays[i].WorkNum += duration
 			}
 		}
-		slice := teacher.Extend.WorkDays[:]
-		sort.Slice(slice, func(i, j int) bool {
-			return slice[i].WorkNum < slice[j].WorkNum
-		})
 
-		for i := 0; i < teacher.Dict.HolidayNum; i++ {
-			teacher.Extend.Holidays[teacher.Extend.WorkDays[i].Day] = struct{}{}
+		if originDuration {
+			slice := teacher.Extend.WorkDays[:]
+			sort.Slice(slice, func(i, j int) bool {
+				return slice[i].WorkNum < slice[j].WorkNum
+			})
+
+			for i := 0; i < teacher.Dict.HolidayNum; i++ {
+				teacher.Extend.Holidays[teacher.Extend.WorkDays[i].Day] = struct{}{}
+			}
+			// teacher.updateDaysDistribution()
 		}
-		// teacher.updateDaysDistribution()
 	}
 }
 
 // 处理班级extend数据
-func ProcessClasses(classes map[string]*Class, students map[string]*Student) {
+func ProcessClasses(classes map[string]*Class, students map[string]*Student, originDuration bool) {
 	for _, class := range classes {
 		classSpareTime := make(map[int]map[int]int)
 		for sName := range class.Dict.ClassMates {
@@ -103,7 +110,9 @@ func ProcessClasses(classes map[string]*Class, students map[string]*Student) {
 				}
 				spare := classSpareTime[day]
 				for duration := range time {
-					if checkDuration(duration) {
+					if originDuration && checkDuration(duration) {
+						spare[duration]++
+					} else if !originDuration && !checkDuration(duration) {
 						spare[duration]++
 					}
 				}
@@ -129,7 +138,7 @@ func ProcessClasses(classes map[string]*Class, students map[string]*Student) {
 }
 
 // 处理课程extend数据
-func ProcessLessons(lessons []*Lesson, students map[string]*Student, teachers map[string]*Teacher, classes map[string]*Class) {
+func ProcessLessons(lessons []*Lesson, students map[string]*Student, teachers map[string]*Teacher, classes map[string]*Class, originDuration bool) {
 	for _, lesson := range lessons {
 		teacher := teachers[lesson.Dict.TeacherName]
 		teacherTime := teacher.Dict.SpareTime
@@ -147,7 +156,7 @@ func ProcessLessons(lessons []*Lesson, students map[string]*Student, teachers ma
 			studyPrioirty = student.Extend.Priority
 			studyLessons = student.Lessons
 		}
-		possibleDayNum, lessonTime := getLessonPossibleDays(studyTime, teacherTime, teacher.Extend.Holidays)
+		possibleDayNum, lessonTime := getLessonPossibleDays(studyTime, teacherTime, teacher.Extend.Holidays, originDuration)
 		lessonPriority := studyPrioirty * teacher.Extend.Priority / float64(possibleDayNum)
 		lesson.Extend.SpareTime = lessonTime
 		lesson.Extend.Priority = lessonPriority
@@ -161,16 +170,26 @@ func ProcessLessons(lessons []*Lesson, students map[string]*Student, teachers ma
 					continue
 				}
 				for j, workNum := range time {
-					teachersDays[i][j] = lessonTeacher.Extend.Priority * float64(workNum)
+					if originDuration {
+						teachersDays[i][j] = lessonTeacher.Extend.Priority * float64(workNum)
+					} else {
+						teachersDays[i][common.OtherDuration[j]] = lessonTeacher.Extend.Priority * float64(workNum)
+					}
 				}
 			}
 		}
 		for day, time := range lessonTime {
 			for duration := range time {
+				var priority float64
+				if originDuration {
+					priority = teachersDays[day][duration]
+				} else {
+					priority = teachersDays[day][common.OtherDuration[duration]]
+				}
 				candidateDays = append(candidateDays, CandidateDay{
 					Day: day,
 					Duration: duration,
-					Priority: teachersDays[day][duration],
+					Priority: priority,
 				})
 			}
 		}
@@ -200,12 +219,14 @@ func (c *Class) dispatchToClass() {
 }
 
 // 计算老师可能工作时间分布
-func (t *Teacher) setDaysDistribution(spareTimeMap map[int]map[int]struct{}) {
+func (t *Teacher) setDaysDistribution(spareTimeMap map[int]map[int]struct{}, originDuration bool) {
 	var spareTime [7][3]int
 	for day, time := range spareTimeMap {
 		for duration := range time {
-			if checkDuration(duration) {
+			if originDuration && checkDuration(duration) {
 				spareTime[day][duration]++
+			} else if !originDuration && !checkDuration(duration) {
+				spareTime[day][common.OtherDuration[duration]]++
 			}
 		}
 	}
@@ -240,7 +261,7 @@ func checkDuration(duration int) bool {
 }
 
 // 得到课程可能安排的时间
-func getLessonPossibleDays(studyTime, teacherTime map[int]map[int]struct{}, teacherHolidy map[int]struct{}) (int, map[int]map[int]struct{}) {
+func getLessonPossibleDays(studyTime, teacherTime map[int]map[int]struct{}, teacherHolidy map[int]struct{}, originDuration bool) (int, map[int]map[int]struct{}) {
 	days, spareTime := 0, make(map[int]map[int]struct{})
 	for tDay, tTime := range teacherTime {
 		if _, ok := teacherHolidy[tDay]; ok {
@@ -248,12 +269,14 @@ func getLessonPossibleDays(studyTime, teacherTime map[int]map[int]struct{}, teac
 		}
 		if sTime, ok := studyTime[tDay]; ok {
 			for sDuration := range sTime {
-				if _, ok := tTime[sDuration]; ok {
-					days++
-					if _, ok := spareTime[tDay]; !ok {
-						spareTime[tDay] = make(map[int]struct{})
+				if (originDuration && checkDuration(sDuration)) || (!originDuration && !checkDuration(sDuration)) {
+					if _, ok := tTime[sDuration]; ok {
+						days++
+						if _, ok := spareTime[tDay]; !ok {
+							spareTime[tDay] = make(map[int]struct{})
+						}
+						spareTime[tDay][sDuration] = struct{}{} 
 					}
-					spareTime[tDay][sDuration] = struct{}{} 
 				}
 			}
 		}

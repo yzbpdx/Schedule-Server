@@ -3,7 +3,7 @@ package algorithm
 import (
 	"bytes"
 	"encoding/gob"
-	"fmt"
+	_ "fmt"
 	"schedule/common"
 	"schedule/logs"
 	"schedule/mysql"
@@ -43,39 +43,32 @@ func StartSchedule() {
 	teachers := ImportTeachers(mysql.GetClient())
 	lessons := ImportLessons(mysql.GetClient())
 	DispatchLessons(lessons, students, teachers, classes)
-	ProcessStudents(students)
-	ProcessClasses(classes, students)
-	ProcessTeachers(teachers, classes, students)
-	ProcessLessons(lessons, students, teachers, classes)
+	ProcessStudents(students, true)
+	ProcessClasses(classes, students, true)
+	ProcessTeachers(teachers, classes, students, true)
+	ProcessLessons(lessons, students, teachers, classes, true)
 
 	var schedule Schedule
 	schedule.Students = students
 	schedule.Classes = classes
 	schedule.Teachers = teachers
 	schedule.Lessons = lessons
-	schedule.FinalResult = ScheduleResult{
-		StudentResult: make(map[string][7][3]LessonResult),
-		TeacherResult: make(map[string][7][3]LessonResult),
-	}
-	schedule.TmpResult = ScheduleResult{
-		StudentResult: make(map[string][7][3]LessonResult),
-		TeacherResult: make(map[string][7][3]LessonResult),
-	}
+	schedule.FinalResult = initScheduleResult()
+	schedule.TmpResult = initScheduleResult()
 	schedule.UnScheduleLessons = make([]*Lesson, 0)
-	schedule.UnPerfectResult = ScheduleResult{
-		StudentResult: make(map[string][7][3]LessonResult),
-		TeacherResult: make(map[string][7][3]LessonResult),
-	}
+	schedule.UnPerfectResult = initScheduleResult()
 	schedule.LessonNum = len(schedule.Lessons)
 
-	schedule.backTrackingSchedule(0, 0)
+	schedule.backTrackingSchedule(0, 0, true)
 	logs.GetInstance().Logger.Infof("finish schedule with %v unscheduled lesson", len(schedule.UnScheduleLessons))
-	// logs.GetInstance().Logger.Infof("final result %v", schedule.FinalResult)
-	// logs.GetInstance().Logger.Infof("lesson %v", schedule.FinalResult.StudentResult["dyf"][1][2].Lesson)
+
+	if len(schedule.UnScheduleLessons) > 0 {
+		OpenOtherDuration(&schedule)
+	}
 }
 
 // 回溯课程的可能安排时间得到最终结果或者得到未完全成功和冲突课程的结果
-func (s *Schedule) backTrackingSchedule(startIndex, finishNum int) {
+func (s *Schedule) backTrackingSchedule(startIndex, finishNum int, originDuration bool) {
 	if s.FindResult {
 		return
 	}
@@ -90,7 +83,6 @@ func (s *Schedule) backTrackingSchedule(startIndex, finishNum int) {
 		s.StartFrom = startIndex
 		s.UnPerfectResult = *deepCopy(s.TmpResult)
 	}
-	fmt.Println(s.StartFrom)
 
 	for i := startIndex; i < s.LessonNum; i++ {
 		lesson := s.Lessons[i]
@@ -115,7 +107,10 @@ func (s *Schedule) backTrackingSchedule(startIndex, finishNum int) {
 
 		for _, candidateDay := range lesson.Extend.CandidateDays {
 			day, duration := candidateDay.Day, candidateDay.Duration
-			if s.checkLessonTimeConfict(day, duration, sName, tName, isClass) {
+			if !originDuration {
+				duration = common.OtherDuration[duration]
+			}
+			if s.checkLessonTimeConfict(day, duration, sName, tName, isClass, originDuration) {
 				continue
 			}
 			finishNum++
@@ -144,7 +139,7 @@ func (s *Schedule) backTrackingSchedule(startIndex, finishNum int) {
 			}
 			logs.GetInstance().Logger.Infof("set %v %v at day %v duration %v with %v", lesson.Dict.StudyName, lesson.Dict.TeacherName, day, duration, lesson.Extend.Priority)
 			s.TmpResult.TeacherResult[tName] = teacherResult
-			s.backTrackingSchedule(i + 1, finishNum)
+			s.backTrackingSchedule(i + 1, finishNum, originDuration)
 			if s.FindResult {
 				return
 			}
@@ -191,7 +186,10 @@ func (s *Schedule) backTrackingSchedule(startIndex, finishNum int) {
 }
 
 // 检查当前时间是否与已经安排课程有冲突
-func (s *Schedule) checkLessonTimeConfict(day, duration int, sName, tName string, isClass bool) bool {
+func (s *Schedule) checkLessonTimeConfict(day, duration int, sName, tName string, isClass bool, originDuration bool) bool {
+	if !originDuration {
+		duration = common.OtherDuration[duration]
+	}
 	if s.TmpResult.TeacherResult[tName][day][duration].IfSchedule {
 		return true
 	}
@@ -235,4 +233,11 @@ func deepCopy(r ScheduleResult) *ScheduleResult {
 	}
 
 	return &copy
+}
+
+func initScheduleResult() ScheduleResult {
+	return ScheduleResult{
+		StudentResult: make(map[string][7][3]LessonResult),
+		TeacherResult: make(map[string][7][3]LessonResult),
+	}
 }
