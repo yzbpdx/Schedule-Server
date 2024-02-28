@@ -13,8 +13,28 @@ func RouterInit() *gin.Engine {
 	ginRouter.LoadHTMLGlob("html/*")
 
 	ginRouter.GET("/", func(ctx *gin.Context) {
-		ctx.Redirect(http.StatusFound, "/login")
+		ctx.Redirect(http.StatusFound, "/home")
 	})
+	ginRouter.GET("/home", func(ctx *gin.Context) {
+		ctx.HTML(http.StatusOK, "home.html", gin.H{})
+	})
+	ginRouter.GET("/student", func(ctx *gin.Context) {
+		ctx.HTML(http.StatusOK, "student.html", gin.H{})
+	})
+	ginRouter.GET("/teacher", func(ctx *gin.Context) {
+		ctx.HTML(http.StatusOK, "teacher.html", gin.H{})
+	})
+	ginRouter.GET("/lesson", func(ctx *gin.Context) {
+		ctx.HTML(http.StatusOK, "lesson.html", gin.H{})
+	})
+	ginRouter.GET("/class", func(ctx *gin.Context) {
+		ctx.HTML(http.StatusOK, "class.html", gin.H{})
+	})
+
+	ginRouter.POST("/show", ShowHandler)
+	ginRouter.POST("/update", UpdateHandler)
+	ginRouter.POST("/add", AddHandler)
+	ginRouter.POST("/delete", DeleteHandler)
 
 	return ginRouter
 }

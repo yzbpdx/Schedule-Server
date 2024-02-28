@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="UTF-8">
+  <title>学生信息</title>
+  <style>
+    table {
+      border-collapse: collapse;
+      width: 80%;
+      margin: 20px auto;
+    }
+
+    th, td {
+      border: 1px solid #dddddd;
+      text-align: center;
+      padding: 8px;
+    }
+
+    th {
+      background-color: #f2f2f2;
+    }
+
+    td {
+      cursor: pointer;
+    }
+  </style>
+</head>
+
+<body>
+  <h2>学生信息</h2>
+
+  <button onclick="addStudent(this)">添加学生</button>
+
+  <table id="schedule">
+    <tr>
+      <th>姓名/时间</th>
+      <th>星期一</th>
+      <th>星期二</th>
+      <th>星期三</th>
+      <th>星期四</th>
+      <th>星期五</th>
+      <th>星期六</th>
+      <th>星期日</th>
+      <th>是否启用</th>
+      <th>操作</th>
+    </tr>
+  </table>
+
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <script>
+    var studentData;
+    var times = ["早上", "上午", "下午1", "下午2", "晚上1", "晚上2"];
+    window.onload = showTable;
+
+    function showTable() {
+        var data = {
+            showType: 'student',
+        };
+        $.ajax({
+            url: '/show',
+            type: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            data: JSON.stringify(data),
+            success: function (response) {
+                var table = document.getElementById('schedule');
+                studentData = response.results;
+                for (var i = 0; i < studentData.length; i++) {
+                    var rowName = table.insertRow(-1);
+                    var cellName = rowName.insertCell(0);
+                    var nameInput = document.createElement('input');
+                    nameInput.type = 'text';
+                    nameInput.value = studentData[i].studentName;
+                    nameInput.classList.add('nameInput');
+                    nameInput.addEventListener('change', (function(i) {
+                        return function() {
+                            studentData[i].studentName = this.value;
+                        }
+                    })(i));
+                    cellName.appendChild(nameInput);
+                    for (var j = 0; j < 7; j++) {
+                        rowName.insertCell(-1);
+                    }
+                    for (var j = 0; j < times.length; j++) {
+                        var innerRow = table.insertRow(-1);
+                        var cellTime = innerRow.insertCell(0);
+                        cellTime.innerHTML = times[j];
+                        for (var k = 0; k < 7; k++) {
+                            var innerCell = innerRow.insertCell(-1);
+                            var checkbox = document.createElement('input');
+                            checkbox.type = 'checkbox';
+                            checkbox.classList.add('checkbox');
+                            if (studentData[i].spareTime[k][j]) {
+                                checkbox.checked = true;
+                            } else {
+                                checkbox.checked = false;
+                            }
+                            checkbox.onclick = (function (i, k, j) {
+                                return function() {
+                                    studentData[i].spareTime[k][j] = this.checked;
+                                }
+                            })(i, k, j);
+                            innerCell.appendChild(checkbox);
+                        }
+                    }
+                    var cellEnable = rowName.insertCell(-1);
+                    var enableCheckbox = document.createElement('input');
+                    enableCheckbox.type = 'checkbox';
+                    enableCheckbox.classList.add('enableCheckbox');
+                    if (studentData[i].status) {
+                        enableCheckbox.checked = true;
+                    } else {
+                        enableCheckbox.checked = false;
+                    }
+                    enableCheckbox.onclick = function () {
+                        studentData[i].status = this.checked;
+                    }
+                    cellEnable.appendChild(enableCheckbox);
+
+                    var cellOperation = rowName.insertCell(-1);
+                    var updateButton = document.createElement('button');
+                    updateButton.innerHTML = '更新';
+                    updateButton.onclick = (function (i) {
+                        return function() {
+                            data = {
+                                updateType: 'student',
+                                studentData: studentData[i],
+                            };
+                            $.ajax({
+                                url: '/update',
+                                type: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json'
+                                },
+                                data: JSON.stringify(data),
+                                success: function (response) {
+                                    alert('更新成功');
+                                    location.reload();
+                                }
+                            });
+                        }
+                    })(i);
+                    cellOperation.appendChild(updateButton);
+
+                    var deleteButton = document.createElement('button');
+                    deleteButton.innerHTML = '删除';
+                    deleteButton.onclick = (function (i) {
+                        return function() {    
+                            var data = {
+                                deleteType: 'student',
+                                deleteId: studentData[i].studentId,
+                            };
+                            $.ajax({
+                                url: '/delete',
+                                type: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json'
+                                },
+                                data: JSON.stringify(data),
+                                success: function (response) {
+                                    alert('删除成功');
+                                    location.reload();
+                                }
+                            });
+                        }
+                    })(i);
+                    cellOperation.appendChild(deleteButton);
+                }
+            }
+        })
+    }
+
+    function addStudent(button) {
+        button.disabled = true;
+        var table = document.getElementById('schedule');
+
+        var rowName = table.insertRow(1);
+        var cellName = rowName.insertCell(0);
+        var nameInput = document.createElement('input');
+        nameInput.type = 'text';
+        nameInput.value = '';
+        nameInput.classList.add('nameInput');
+        cellName.appendChild(nameInput);
+
+        for (var j = 0; j < 7; j++) {
+            rowName.insertCell(-1);
+        }
+
+        for (var j = 0; j < times.length; j++) {
+            var innerRow = table.insertRow(j + 2);
+            var cellTime = innerRow.insertCell(0);
+            cellTime.innerHTML = times[j];
+
+            for (var k = 0; k < 7; k++) {
+                var innerCell = innerRow.insertCell(-1);
+                var checkbox = document.createElement('input');
+                checkbox.type = 'checkbox';
+                checkbox.classList.add('checkbox');
+                innerCell.appendChild(checkbox);
+            }
+        }
+
+        var cellEnable = rowName.insertCell(-1);
+        var enableCheckbox = document.createElement('input');
+        enableCheckbox.type = 'checkbox';
+        enableCheckbox.classList.add('enableCheckbox');
+        cellEnable.appendChild(enableCheckbox);
+
+        var cellOperation = rowName.insertCell(-1);
+        var addButton = document.createElement('button');
+        addButton.innerHTML = '添加';
+        addButton.onclick = function() {
+            var newStudentData = {
+                studentName: nameInput.value,
+                spareTime: [],
+                status: enableCheckbox.checked
+            };
+
+            for (var k = 0; k < 7; k++) {
+                newStudentData.spareTime.push([]);
+                for (var j = 0; j < times.length; j++) {
+                    newStudentData.spareTime[k].push(table.rows[j + 2].cells[k + 1].getElementsByTagName('input')[0].checked);
+                }
+            }
+
+            var data = {
+                addType: 'student',
+                studentData: newStudentData
+            };
+            $.ajax({
+                url: '/add',
+                type: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                data: JSON.stringify(data),
+                success: function(response) {
+                    alert('添加成功');
+                    button.disabled = false;
+                    location.reload();
+                }
+            });
+        };
+        cellOperation.appendChild(addButton);
+    }
+
+  </script>
+</body>
+
+</html>
