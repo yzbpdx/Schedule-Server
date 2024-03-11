@@ -41,7 +41,7 @@ func ConvertSpareTime(newSpareTime map[int]map[int]struct{}, spareTime [common.D
 			if _, ok := newSpareTime[day]; !ok {
 				newSpareTime[day] = make(map[int]struct{})
 			}
-			spareTime[day][duration - 1] = true
+			newSpareTime[day][duration - 1] = struct{}{}
 		}
 	}
 }
