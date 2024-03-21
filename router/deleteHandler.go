@@ -44,7 +44,7 @@ func deleteStudentHandler(ctx *gin.Context, id int) {
 		return
 	}
 
-	showStudentsHandler(ctx)
+	// showStudentsHandler(ctx)
 }
 
 // 处理删除课程
@@ -57,7 +57,7 @@ func deleteClassHandler(ctx *gin.Context, id int) {
 		return
 	}
 
-	showClassesHandler(ctx)
+	// showClassesHandler(ctx)
 }
 
 // 处理删除老师
@@ -70,7 +70,7 @@ func deleteTeacherHandler(ctx *gin.Context, id int) {
 		return
 	}
 
-	showTeachersHandler(ctx)
+	// showTeachersHandler(ctx)
 }
 
 // 处理删除课程
@@ -83,5 +83,5 @@ func deleteLessonHandler(ctx *gin.Context, id int) {
 		return
 	}
 
-	showLessonsHandler(ctx)
+	// showLessonsHandler(ctx)
 }

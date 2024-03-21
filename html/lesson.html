@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="UTF-8">
+  <title>课程信息</title>
+  <style>
+    table {
+      border-collapse: collapse;
+      width: 80%;
+      margin: 20px auto;
+    }
+
+    th, td {
+      border: 1px solid #dddddd;
+      text-align: center;
+      padding: 8px;
+    }
+
+    th {
+      background-color: #f2f2f2;
+    }
+
+    td {
+      cursor: pointer;
+    }
+  </style>
+</head>
+
+<body>
+  <h2>课程信息</h2>
+
+  <button onclick="addLesson(this)">添加课程</button>
+
+  <table id="schedule">
+    <tr>
+      <th>课程</th>
+      <th>老师</th>
+      <th>学习</th>
+      <th>学生数量</th>
+      <th>操作</th>
+    </tr>
+  </table>
+
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <script>
+    var lessonData;
+    window.onload = showTable;
+
+    function showTable() {
+      var data = {
+        showType: 'lesson',
+      };
+      $.ajax({
+        type: 'POST',
+        url: '/show',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        data: JSON.stringify(data),
+        success: function (response) {
+          var table = document.getElementById('schedule');
+          lessonData = response.results;
+          for (var i = 0; i < lessonData.length; i++) {
+            var rowName = table.insertRow(-1);
+
+            var cellLesson = rowName.insertCell(0);
+            var lessonInput = document.createElement('input');
+            lessonInput.type = 'text';
+            lessonInput.value = lessonData[i].lessonName;
+            lessonInput.classList.add('lessonInput');
+            lessonInput.addEventListener('change', (function(i) {
+              return function() {
+                lessonData[i].lessonName = this.value;
+              }
+            })(i));
+            cellLesson.appendChild(lessonInput);
+
+            var cellTeacher = rowName.insertCell(-1);
+            var teacherInput = document.createElement('input');
+            teacherInput.type = 'text';
+            teacherInput.value = lessonData[i].teacherName;
+            teacherInput.classList.add('teacherInput');
+            teacherInput.addEventListener('change', (function(i) {
+              return function() {
+                lessonData[i].teacherName = this.value;
+              }
+            })(i));
+            cellTeacher.appendChild(teacherInput);
+
+            var cellStudy = rowName.insertCell(-1);
+            var studuyInput = document.createElement('input');
+            studuyInput.type = 'text';
+            studuyInput.value = lessonData[i].studyName;
+            studuyInput.classList.add('studyInput');
+            studuyInput.addEventListener('change', (function(i) {
+              return function() {
+                lessonData[i].studyName = this.value;
+              }
+            })(i));
+            cellStudy.appendChild(studuyInput);
+
+            var cellStudentNum = rowName.insertCell(-1);
+            var studentNumInput = document.createElement('input');
+            studentNumInput.type = 'number';
+            studentNumInput.value = lessonData[i].studentNum;
+            studentNumInput.classList.add('studentNumInput');
+            studentNumInput.addEventListener('change', (function(i) {
+              return function() {
+                lessonData[i].studentNum = parseInt(this.value);
+              }
+            })(i));
+            cellStudentNum.appendChild(studentNumInput);
+
+            var cellOperation = rowName.insertCell(-1); 
+            var updateButton = document.createElement('button');
+            updateButton.innerHTML = '更新';
+            updateButton.onclick = (function (i) {
+              return function() {
+                data = {
+                  updateType: 'lesson',
+                  lessonData: lessonData[i],
+                };
+                $.ajax({
+                  type: 'POST',
+                  url: '/update',
+                  headers: {
+                    'Content-Type': 'application/json'
+                  },
+                  data: JSON.stringify(data),
+                  success: function (response) {
+                    alert('更新成功');
+                    location.reload();
+                  }
+                });
+              }
+            })(i);
+            cellOperation.appendChild(updateButton);
+            var deleteButton = document.createElement('button');
+            deleteButton.innerHTML = '删除';
+            deleteButton.onclick = (function (i) {
+              return function() {
+                var data = {
+                  deleteType: 'lesson',
+                  deleteId: lessonData[i].lessonId,
+                };
+                $.ajax({
+                  url: '/delete',
+                  type: 'POST',
+                  headers: {
+                    'Content-Type': 'application/json'
+                  },
+                  data: JSON.stringify(data),
+                  success: function (response) {
+                    alert('删除成功');
+                    location.reload();
+                  }
+                });
+              }
+            })(i);
+            cellOperation.appendChild(deleteButton);
+          }
+        }
+      });
+    }
+
+    function addLesson(button) {
+      button.disabled = true;
+      var table = document.getElementById('schedule');
+
+      var rowName = table.insertRow(1);
+
+      var cellLesson = rowName.insertCell(0);
+      var lessonInput = document.createElement('input');
+      lessonInput.type = 'text';
+      lessonInput.classList.add('lessonInput');
+      cellLesson.appendChild(lessonInput);
+
+      var cellTeacher = rowName.insertCell(-1);
+      var teacherInput = document.createElement('input');
+      teacherInput.type = 'text';
+      teacherInput.classList.add('teacherInput');
+      cellTeacher.appendChild(teacherInput);
+
+      var cellStudy = rowName.insertCell(-1);
+      var studuyInput = document.createElement('input');
+      studuyInput.type = 'text';
+      studuyInput.classList.add('studyInput');
+      cellStudy.appendChild(studuyInput);
+
+      var cellStudentNum = rowName.insertCell(-1);
+      var studentNumInput = document.createElement('input');
+      studentNumInput.type = 'number';
+      studentNumInput.value = 1;
+      studentNumInput.classList.add('studentNumInput');
+      cellStudentNum.appendChild(studentNumInput);
+
+      var cellOperation = rowName.insertCell(-1);
+      var addButton = document.createElement('button');
+      addButton.innerHTML = '添加';
+      addButton.onclick = function() {
+        var newLessonData = {
+          lessonName: lessonInput.value,
+          teacherName: teacherInput.value,
+          studyName: studuyInput.value,
+          studentNum: parseInt(studentNumInput.value),
+        };
+
+        var data = {
+          addType: 'lesson',
+          lessonData: newLessonData,
+        };
+
+        $.ajax({
+          type: 'POST',
+          url: '/add',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          data: JSON.stringify(data),
+          success: function (response) {
+            alert('添加成功');
+            button.disabled = false;
+            location.reload();
+          }
+        });
+      }
+      cellOperation.appendChild(addButton);
+    }
+  </script>
+</body>
+
+</html>

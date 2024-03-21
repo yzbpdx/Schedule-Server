@@ -62,7 +62,7 @@ func updateStudentHandler(update *Update, ctx *gin.Context) {
 		ctx.JSON(http.StatusInternalServerError, gin.H{})
 		return
 	}
-	showStudentsHandler(ctx)
+	// showStudentsHandler(ctx)
 }
 
 // 处理更新课程
@@ -85,13 +85,13 @@ func updateClassHandler(update *Update, ctx *gin.Context) {
 	class.ClassMates = classMatesJson
 
 	db := mysql.GetClient()
-	e := db.Save(&class)
+	e := db.Where("classId = ?", class.ClassId).Save(&class)
 	if e.Error != nil {
 		logs.GetInstance().Logger.Errorf("create class sql error %s", e.Error)
 		ctx.JSON(http.StatusInternalServerError, gin.H{})
 		return
 	}
-	showClassesHandler(ctx)
+	// showClassesHandler(ctx)
 }
 
 // 处理更新老师
@@ -112,13 +112,13 @@ func updateTeacherHandler(update *Update, ctx *gin.Context) {
 	teacher.SpareTime = spareTimeJson
 
 	db := mysql.GetClient()
-	e := db.Save(&teacher)
+	e := db.Where("teacherId = ?", teacher.TeacherId).Save(&teacher)
 	if e.Error != nil {
 		logs.GetInstance().Logger.Errorf("create teacher sql error %s", e.Error)
 		ctx.JSON(http.StatusInternalServerError, gin.H{})
 		return
 	}
-	showTeachersHandler(ctx)
+	// showTeachersHandler(ctx)
 }
 
 // 处理更新课程
@@ -131,11 +131,11 @@ func updateLessonHandler(update *Update, ctx *gin.Context) {
 	lesson.StudentNum = update.LessonData.StudentNum
 
 	db := mysql.GetClient()
-	err := db.Save(&lesson)
+	err := db.Where("lessonId = ?", lesson.LessonId).Save(&lesson)
 	if err.Error != nil {
 		logs.GetInstance().Logger.Errorf("create lesson sql error %s", err.Error)
 		ctx.JSON(http.StatusInternalServerError, gin.H{})
 		return
 	}
-	showLessonsHandler(ctx)
+	// showLessonsHandler(ctx)
 }

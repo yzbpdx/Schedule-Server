@@ -91,7 +91,7 @@
                     holidayInput.classList.add('holidayInput');
                     holidayInput.addEventListener('change', (function(i) {
                         return function() {
-                            teacherData[i].holidayNum = this.value;
+                            teacherData[i].holidayNum = parseInt(this.value);
                         }
                     })(i));
                     cellHoliday.appendChild(holidayInput);
