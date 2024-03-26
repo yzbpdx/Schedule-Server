@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="UTF-8">
+  <title>班级信息</title>
+  <style>
+    table {
+      border-collapse: collapse;
+      width: 80%;
+      margin: 20px auto;
+    }
+
+    th, td {
+      border: 1px solid #dddddd;
+      text-align: center;
+      padding: 8px;
+    }
+
+    th {
+      background-color: #f2f2f2;
+    }
+
+    td {
+      cursor: pointer;
+    }
+  </style>
+</head>
+
+<body>
+  <h2>班级信息</h2>
+
+  <button onclick="addLesson(this)">添加班级</button>
+
+  <table id="schedule">
+    <tr>
+      <th>班级</th>
+      <th>学生</th>
+      <th>是否启用</th>
+      <th>操作</th>
+    </tr>
+  </table>
+
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <script>
+    var classData;
+    window.onload = showTable;
+
+    function showTable() {
+      var data = {
+        showType: 'class',
+      };
+      $.ajax({
+        type: 'POST',
+        url: '/show',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        data: JSON.stringify(data),
+        success: function (response) {
+          var table = document.getElementById('schedule');
+          classData = response.results;
+          for (var i = 0; i < classData.length; i++) {
+            var rowName = table.insertRow(-1);
+
+            var cellClass = rowName.insertCell(0);
+            var classInput = document.createElement('input');
+            classInput.type = 'text';
+            classInput.value = classData[i].className;
+            classInput.classList.add('classInput');
+            classInput.addEventListener('change', (function(i) {
+              return function() {
+                classData[i].className = classInput.value;
+              }
+            })(i));
+            cellClass.appendChild(classInput);
+
+            var cellStudent = rowName.insertCell(-1);
+            var studentInput = document.createElement('input');
+            studentInput.type = 'text';
+            studentInput.value = classData[i].classMates;
+            studentInput.classList.add('studentInput');
+            studentInput.addEventListener('change', (function(i) {
+              return function() {
+                classData[i].classMates = studentInput.value;
+              }
+            })(i));
+            cellStudent.appendChild(studentInput);
+
+            var cellEnable = rowName.insertCell(-1);
+            var enableCheckbox = document.createElement('input');
+            enableCheckbox.type = 'checkbox';
+            enableCheckbox.classList.add('enableCheckbox');
+            if (classData[i].status) {
+                enableCheckbox.checked = true;
+            } else {
+                enableCheckbox.checked = false;
+            }
+            enableCheckbox.onclick = function () {
+                console.log(this.checked);
+                classData[i].status = this.checked;
+            }
+            cellEnable.appendChild(enableCheckbox);
+
+            var cellOperation = rowName.insertCell(-1); 
+            var updateButton = document.createElement('button');
+            updateButton.innerHTML = '更新';
+            updateButton.onclick = (function (i) {
+              return function() {
+                data = {
+                  updateType: 'class',
+                  classData: classData[i],
+                };
+                $.ajax({
+                  type: 'POST',
+                  url: '/update',
+                  headers: {
+                    'Content-Type': 'application/json'
+                  },
+                  data: JSON.stringify(data),
+                  success: function (response) {
+                    alert('更新成功');
+                    location.reload();
+                  }
+                });
+              }
+            })(i);
+            cellOperation.appendChild(updateButton);
+            var deleteButton = document.createElement('button');
+            deleteButton.innerHTML = '删除';
+            deleteButton.onclick = (function (i) {
+              return function() {
+                var data = {
+                  deleteType: 'class',
+                  deleteId: classData[i].classId,
+                };
+                $.ajax({
+                  url: '/delete',
+                  type: 'POST',
+                  headers: {
+                    'Content-Type': 'application/json'
+                  },
+                  data: JSON.stringify(data),
+                  success: function (response) {
+                    alert('删除成功');
+                    location.reload();
+                  }
+                });
+              }
+            })(i);
+            cellOperation.appendChild(deleteButton);
+          }
+        }
+      });
+    }
+
+    function addLesson(button) {
+      button.disabled = true;
+      var table = document.getElementById('schedule');
+
+      var rowName = table.insertRow(1);
+
+      var cellClass = rowName.insertCell(0);
+      var classInput = document.createElement('input');
+      classInput.type = 'text';
+      classInput.classList.add('classInput');
+      cellClass.appendChild(classInput);
+
+      var cellStudent = rowName.insertCell(-1);
+      var studentInput = document.createElement('input');
+      studentInput.type = 'text';
+      studentInput.classList.add('studentInput');
+      cellStudent.appendChild(studentInput);
+
+      var cellEnable = rowName.insertCell(-1);
+      var enableCheckbox = document.createElement('input');
+      enableCheckbox.type = 'checkbox';
+      enableCheckbox.classList.add('enableCheckbox');
+      cellEnable.appendChild(enableCheckbox);
+
+      var cellOperation = rowName.insertCell(-1);
+      var addButton = document.createElement('button');
+      addButton.innerHTML = '添加';
+      addButton.onclick = function() {
+        var newClassData = {
+          className: classInput.value,
+          classMates: studentInput.value,
+          status: enableCheckbox.checked,
+        };
+
+        var data = {
+          addType: 'class',
+          classData: newClassData,
+        };
+
+        $.ajax({
+          type: 'POST',
+          url: '/add',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          data: JSON.stringify(data),
+          success: function (response) {
+            alert('添加成功');
+            button.disabled = false;
+            location.reload();
+          }
+        });
+      }
+      cellOperation.appendChild(addButton);
+    }
+  </script>
+</body>
+
+</html>
