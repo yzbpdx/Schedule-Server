@@ -114,9 +114,11 @@
                     } else {
                         enableCheckbox.checked = false;
                     }
-                    enableCheckbox.onclick = function () {
-                        studentData[i].status = this.checked;
-                    }
+                    enableCheckbox.onclick = (function (i) {
+                        return function() {
+                            studentData[i].status = this.checked;
+                        }
+                    })(i);
                     cellEnable.appendChild(enableCheckbox);
 
                     var cellOperation = rowName.insertCell(-1);

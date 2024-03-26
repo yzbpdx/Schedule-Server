@@ -112,6 +112,7 @@
                             }
                             checkbox.onclick = (function (i, k, j) {
                                 return function() {
+                                    console.log(i, j, k)
                                     teacherData[i].spareTime[k][j] = this.checked;
                                 }
                             })(i, k, j);
@@ -127,9 +128,11 @@
                     } else {
                         enableCheckbox.checked = false;
                     }
-                    enableCheckbox.onclick = function () {
-                        teacherData[i].status = this.checked;
-                    }
+                    enableCheckbox.onclick = (function (i) {
+                        return function() {
+                            teacherData[i].status = this.checked;
+                        }
+                    })(i);
                     cellEnable.appendChild(enableCheckbox);
 
                     var cellOperation = rowName.insertCell(-1);
@@ -141,6 +144,7 @@
                                 updateType: 'teacher',
                                 teacherData: teacherData[i],
                             };
+                            console.log(teacherData[i])
                             $.ajax({
                                 url: '/update',
                                 type: 'POST',

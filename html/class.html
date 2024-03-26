@@ -96,10 +96,11 @@
             } else {
                 enableCheckbox.checked = false;
             }
-            enableCheckbox.onclick = function () {
-                console.log(this.checked);
-                classData[i].status = this.checked;
-            }
+            enableCheckbox.onclick = (function(i) {
+              return function() {
+                classData[i].status = enableCheckbox.checked;
+              }
+            })(i);
             cellEnable.appendChild(enableCheckbox);
 
             var cellOperation = rowName.insertCell(-1); 
