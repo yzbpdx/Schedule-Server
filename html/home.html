@@ -30,15 +30,37 @@
       line-height: 50px;
       cursor: pointer;
     }
+
+    button.startLesson {
+      background-color: #FFA500;
+      margin-top: 30px;
+    }
   </style>
 </head>
 
 <body>
-  <h1>学校管理系统</h1>
+  <h1>排课系统</h1>
   <button onclick="window.open('student', '_blank')">学生</button>
   <button onclick="window.open('teacher', '_blank')">老师</button>
   <button onclick="window.open('class', '_blank')">班级</button>
-  <button onclick="window.open('lesson', '_blank')">课程</button>  
+  <button onclick="window.open('lesson', '_blank')">课程</button>
+  <button class="startLesson" id="startLessonBtn">开始排课</button>
+
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <script>
+    $('#startLessonBtn').click(function() {
+      $.ajax({
+        url: 'schedule',
+        type: 'GET',
+        success: function(response) {
+          alert('排课成功');
+        },
+        error: function() {
+          alert('排课失败');
+        }
+      });
+    });
+  </script>
 </body>
 
 </html>

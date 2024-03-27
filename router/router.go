@@ -30,6 +30,7 @@ func RouterInit() *gin.Engine {
 	ginRouter.GET("/class", func(ctx *gin.Context) {
 		ctx.HTML(http.StatusOK, "class.html", gin.H{})
 	})
+	ginRouter.GET("/schedule")
 
 	ginRouter.POST("/show", ShowHandler)
 	ginRouter.POST("/update", UpdateHandler)

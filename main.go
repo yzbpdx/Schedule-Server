@@ -1,7 +1,6 @@
 package main
 
 import (
-	"schedule/algorithm"
 	config "schedule/conf"
 	"schedule/logs"
 	"schedule/mysql"
@@ -19,6 +18,4 @@ func main() {
 	ginRouter := router.RouterInit()
 
 	ginRouter.Run(":9000")
-
-	algorithm.StartSchedule()
 }
