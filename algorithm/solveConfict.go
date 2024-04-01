@@ -6,8 +6,8 @@ func OpenOtherDuration(schedule *Schedule) {
 	students := make(map[string]*Student)
 	for sName, student := range schedule.Students {
 		students[sName] = &Student{
-			Dict: student.Dict,
-			Extend: StudentExtend{},
+			Dict:    student.Dict,
+			Extend:  StudentExtend{},
 			Lessons: make(map[string]*Lesson),
 		}
 	}
@@ -25,12 +25,16 @@ func OpenOtherDuration(schedule *Schedule) {
 	classes := make(map[string]*Class)
 	for cName, class := range schedule.Classes {
 		classes[cName] = &Class{
-			Dict: class.Dict,
-			Extend: ClassExtend{},
+			Dict:    class.Dict,
+			Extend:  ClassExtend{},
 			Lessons: make(map[string]*Lesson),
 		}
 	}
-	lessons := schedule.UnScheduleLessons
+	lessonsMap := schedule.UnScheduleLessons
+	var lessons []*Lesson
+	for _, lesson := range lessonsMap {
+		lessons = append(lessons, lesson)
+	}
 	DispatchLessons(lessons, students, teachers, classes)
 	ProcessStudents(students, false)
 	ProcessClasses(classes, students, false)
@@ -44,7 +48,7 @@ func OpenOtherDuration(schedule *Schedule) {
 	scheduleOpenDuration.Lessons = lessons
 	scheduleOpenDuration.FinalResult = initScheduleResult()
 	scheduleOpenDuration.TmpResult = initScheduleResult()
-	scheduleOpenDuration.UnScheduleLessons = make([]*Lesson, 0)
+	scheduleOpenDuration.UnScheduleLessons = make(map[int]*Lesson)
 	scheduleOpenDuration.UnPerfectResult = initScheduleResult()
 	scheduleOpenDuration.LessonNum = len(scheduleOpenDuration.Lessons)
 

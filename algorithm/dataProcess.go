@@ -29,9 +29,6 @@ func DispatchLessons(lessons []*Lesson, students map[string]*Student, teachers m
 		teacher.Lessons[lessonDict.LessonName] = lesson
 	}
 	logs.GetInstance().Logger.Infof("dispatch lessons success")
-	// logs.GetInstance().Logger.Infof("lessons %v %v", teachers["zyh"].Lessons, students["dyf"].Lessons)
-
-	return
 }
 
 // 处理学生extend数据
@@ -65,7 +62,7 @@ func ProcessTeachers(teachers map[string]*Teacher, classes map[string]*Class, st
 		}
 
 		teacher.Extend.Priority = float64(teacher.Extend.LessonNum) / float64(teacher.Extend.SpareNum)
-	
+
 		for _, lesson := range teacher.Lessons {
 			sName := lesson.Dict.StudyName
 			if lesson.Dict.StudentNum > 1 {
@@ -133,7 +130,7 @@ func ProcessClasses(classes map[string]*Class, students map[string]*Student, ori
 		}
 
 		class.Extend.Priority = float64(class.Extend.LessonNum) / float64(class.Extend.SpareNum)
-		logs.GetInstance().Logger.Infof("%v spare time %v", class.Dict.ClassName, class.Extend.SpareTime)
+		// logs.GetInstance().Logger.Infof("%v spare time %v with %v", class.Dict.ClassName, class.Extend.SpareTime, class.Extend.Priority)
 	}
 }
 
@@ -158,6 +155,7 @@ func ProcessLessons(lessons []*Lesson, students map[string]*Student, teachers ma
 		}
 		possibleDayNum, lessonTime := getLessonPossibleDays(studyTime, teacherTime, teacher.Extend.Holidays, originDuration)
 		lessonPriority := studyPrioirty * teacher.Extend.Priority / float64(possibleDayNum)
+		// logs.GetInstance().Logger.Infof("lesson %v with %v and %v", lesson.Dict.LessonName, lessonPriority, studyPrioirty)
 		lesson.Extend.SpareTime = lessonTime
 		lesson.Extend.Priority = lessonPriority
 
@@ -187,7 +185,7 @@ func ProcessLessons(lessons []*Lesson, students map[string]*Student, teachers ma
 					priority = teachersDays[day][common.OtherDuration[duration]]
 				}
 				candidateDays = append(candidateDays, CandidateDay{
-					Day: day,
+					Day:      day,
 					Duration: duration,
 					Priority: priority,
 				})
@@ -275,7 +273,7 @@ func getLessonPossibleDays(studyTime, teacherTime map[int]map[int]struct{}, teac
 						if _, ok := spareTime[tDay]; !ok {
 							spareTime[tDay] = make(map[int]struct{})
 						}
-						spareTime[tDay][sDuration] = struct{}{} 
+						spareTime[tDay][sDuration] = struct{}{}
 					}
 				}
 			}
