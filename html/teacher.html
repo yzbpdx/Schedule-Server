@@ -218,7 +218,25 @@
         cellName.appendChild(nameInput);
 
         for (var j = 0; j < 7; j++) {
-            rowName.insertCell(-1);
+            var cellAll = rowName.insertCell(-1);
+            var allCheckbox = document.createElement('input');
+            allCheckbox.type = 'checkbox';
+            allCheckbox.classList.add('allCheckbox');
+            allCheckbox.onclick = (function (i, j) {
+                return function() {
+                    for (var k = 0; k < times.length; k++) {
+                        row = this.parentNode;
+                        while (row.nodeName.toLowerCase() !== 'tr') {
+                            row = row.parentNode;
+                        }
+                        var rowIndex = row.rowIndex;
+                        var checkbox = table.rows[k + rowIndex + 1].cells[j + 1].getElementsByTagName('input')[0];
+                        checkbox.checked = this.checked;
+                        checkbox.dispatchEvent(new Event('change'));
+                    }
+                }
+            })(0, j);
+            cellAll.appendChild(allCheckbox);
         }
 
         for (var j = 0; j < times.length; j++) {
@@ -231,6 +249,7 @@
                 var checkbox = document.createElement('input');
                 checkbox.type = 'checkbox';
                 checkbox.classList.add('checkbox');
+                checkbox.checked = true;
                 innerCell.appendChild(checkbox);
             }
         }

@@ -64,6 +64,7 @@ func StartSchedule() {
 	schedule.backTrackingSchedule(0, 0, true)
 	logs.GetInstance().Logger.Infof("finish schedule with %v unscheduled lesson", len(schedule.UnScheduleLessons))
 	Result2JSON(schedule.FinalResult.StudentResult)
+	logs.GetInstance().Logger.Infof("result %+v", schedule.FinalResult.StudentResult)
 	fmt.Println("-------------------------------------------------------------------------------")
 
 	if len(schedule.UnScheduleLessons) > 0 {
@@ -73,6 +74,7 @@ func StartSchedule() {
 
 // 回溯课程的可能安排时间得到最终结果或者得到未完全成功和冲突课程的结果
 func (s *Schedule) backTrackingSchedule(startIndex, finishNum int, originDuration bool) {
+	fmt.Println(startIndex, s.StartFrom, s.FinishNum, s.LessonNum)
 	if s.FindResult {
 		return
 	}
@@ -143,7 +145,7 @@ func (s *Schedule) backTrackingSchedule(startIndex, finishNum int, originDuratio
 			IfSchedule: true,
 			Lesson:     lesson,
 		}
-		// logs.GetInstance().Logger.Infof("set %v %v at day %v duration %v with %v", lesson.Dict.StudyName, lesson.Dict.TeacherName, day, duration, lesson.Extend.Priority)
+		logs.GetInstance().Logger.Infof("set %v %v at day %v duration %v with %v", lesson.Dict.StudyName, lesson.Dict.TeacherName, day, duration, lesson.Extend.Priority)
 		s.TmpResult.TeacherResult[tName] = teacherResult
 		s.backTrackingSchedule(startIndex+1, finishNum, originDuration)
 		if s.FindResult {
@@ -176,18 +178,19 @@ func (s *Schedule) backTrackingSchedule(startIndex, finishNum int, originDuratio
 		s.TmpResult.TeacherResult[tName] = teacherResult
 	}
 
-	s.TmpResult = *deepCopy(s.UnPerfectResult)
-	s.UnScheduleLessons[s.Lessons[startIndex].Dict.LessonId] = s.Lessons[startIndex]
-	logs.GetInstance().Logger.Infof("find conflict at %v", s.StartFrom)
-	logs.GetInstance().Logger.Infof("studyName %v teacherName %v", s.Lessons[s.StartFrom].Dict.StudyName, s.Lessons[s.StartFrom].Dict.TeacherName)
+	// s.TmpResult = *deepCopy(s.UnPerfectResult)
+	// s.UnScheduleLessons[s.Lessons[startIndex].Dict.LessonId] = s.Lessons[startIndex]
+	// logs.GetInstance().Logger.Infof("find conflict at %v", s.StartFrom)
+	// logs.GetInstance().Logger.Infof("studyName %v teacherName %v", s.Lessons[s.StartFrom].Dict.StudyName, s.Lessons[s.StartFrom].Dict.TeacherName)
 	// s.backTrackingSchedule(s.StartFrom + 1, s.FinishNum + 1)
 
-	// if !s.FindResult {
-	// 	s.TmpResult = *deepCopy(s.UnPerfectResult)
-	// 	s.UnScheduleLessons = append(s.UnScheduleLessons, s.Lessons[s.StartFrom])
-	// 	logs.GetInstance().Logger.Infof("find conflict at %v", s.StartFrom)
-	// 	s.backTrackingSchedule(s.StartFrom + 1, s.FinishNum + 1)
-	// }
+	if startIndex == s.StartFrom {
+		s.TmpResult = *deepCopy(s.UnPerfectResult)
+		s.UnScheduleLessons[s.Lessons[s.StartFrom].Dict.LessonId] = s.Lessons[s.StartFrom]
+		logs.GetInstance().Logger.Infof("find conflict at %v", s.StartFrom)
+		logs.GetInstance().Logger.Infof("studyName %v teacherName %v", s.Lessons[s.StartFrom].Dict.StudyName, s.Lessons[s.StartFrom].Dict.TeacherName)
+		s.backTrackingSchedule(s.StartFrom+1, s.FinishNum+1, false)
+	}
 }
 
 // 检查当前时间是否与已经安排课程有冲突
