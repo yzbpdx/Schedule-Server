@@ -8,8 +8,9 @@ import (
 )
 
 type Config struct {
-	Redis RedisConfig `yaml:"redis"`
-	MySQL MySQLConfig `yaml:"mysql"`
+	Redis  RedisConfig  `yaml:"redis"`
+	MySQL  MySQLConfig  `yaml:"mysql"`
+	Server ServerConfig `yaml:"server"`
 }
 
 type RedisConfig struct {
@@ -23,6 +24,10 @@ type MySQLConfig struct {
 	PassWord string `yaml:"password"`
 	Addr     string `yaml:"addr"`
 	DB       string `yaml:"db"`
+}
+
+type ServerConfig struct {
+	Port string `yaml:"port"`
 }
 
 // 初始化配置

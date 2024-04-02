@@ -8,3 +8,6 @@ mysql:
   password: "schedule"
   addr: "localhost:3306"
   db: "schedule"
+
+server:
+  port: 9000

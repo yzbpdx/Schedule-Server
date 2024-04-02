@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	config "schedule/conf"
 	"schedule/logs"
 	"schedule/mysql"
@@ -17,5 +18,5 @@ func main() {
 	mysql.MysqlInit(config.MySQL)
 	ginRouter := router.RouterInit()
 
-	ginRouter.Run(":9000")
+	ginRouter.Run(fmt.Sprintf(":%s", config.Server.Port))
 }
